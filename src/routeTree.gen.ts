@@ -13,6 +13,7 @@ import { Route as MembersRouteImport } from './routes/members'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as MessagesIndexRouteImport } from './routes/messages.index'
+import { Route as MessagesUserIdRouteImport } from './routes/messages.$userId'
 import { Route as ChatRoomIdRouteImport } from './routes/chat.$roomId'
 
 const MembersRoute = MembersRouteImport.update({
@@ -35,6 +36,11 @@ const MessagesIndexRoute = MessagesIndexRouteImport.update({
   path: '/messages/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MessagesUserIdRoute = MessagesUserIdRouteImport.update({
+  id: '/messages/$userId',
+  path: '/messages/$userId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ChatRoomIdRoute = ChatRoomIdRouteImport.update({
   id: '/chat/$roomId',
   path: '/chat/$roomId',
@@ -46,6 +52,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/members': typeof MembersRoute
   '/chat/$roomId': typeof ChatRoomIdRoute
+  '/messages/$userId': typeof MessagesUserIdRoute
   '/messages/': typeof MessagesIndexRoute
 }
 export interface FileRoutesByTo {
@@ -53,6 +60,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/members': typeof MembersRoute
   '/chat/$roomId': typeof ChatRoomIdRoute
+  '/messages/$userId': typeof MessagesUserIdRoute
   '/messages': typeof MessagesIndexRoute
 }
 export interface FileRoutesById {
@@ -61,14 +69,34 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/members': typeof MembersRoute
   '/chat/$roomId': typeof ChatRoomIdRoute
+  '/messages/$userId': typeof MessagesUserIdRoute
   '/messages/': typeof MessagesIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth' | '/members' | '/chat/$roomId' | '/messages/'
+  fullPaths:
+    | '/'
+    | '/auth'
+    | '/members'
+    | '/chat/$roomId'
+    | '/messages/$userId'
+    | '/messages/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/members' | '/chat/$roomId' | '/messages'
-  id: '__root__' | '/' | '/auth' | '/members' | '/chat/$roomId' | '/messages/'
+  to:
+    | '/'
+    | '/auth'
+    | '/members'
+    | '/chat/$roomId'
+    | '/messages/$userId'
+    | '/messages'
+  id:
+    | '__root__'
+    | '/'
+    | '/auth'
+    | '/members'
+    | '/chat/$roomId'
+    | '/messages/$userId'
+    | '/messages/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -76,6 +104,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   MembersRoute: typeof MembersRoute
   ChatRoomIdRoute: typeof ChatRoomIdRoute
+  MessagesUserIdRoute: typeof MessagesUserIdRoute
   MessagesIndexRoute: typeof MessagesIndexRoute
 }
 
@@ -109,6 +138,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MessagesIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/messages/$userId': {
+      id: '/messages/$userId'
+      path: '/messages/$userId'
+      fullPath: '/messages/$userId'
+      preLoaderRoute: typeof MessagesUserIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/chat/$roomId': {
       id: '/chat/$roomId'
       path: '/chat/$roomId'
@@ -124,6 +160,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   MembersRoute: MembersRoute,
   ChatRoomIdRoute: ChatRoomIdRoute,
+  MessagesUserIdRoute: MessagesUserIdRoute,
   MessagesIndexRoute: MessagesIndexRoute,
 }
 export const routeTree = rootRouteImport
