@@ -130,7 +130,7 @@ function AuthPage() {
                 <Input placeholder="اسم المستخدم" value={username} onChange={setUsername} />
                 <div className="flex gap-3">
                   <Input type="number" placeholder="العمر" value={age} onChange={setAge} className="w-1/3" />
-                  <Select value={gender} onChange={(v) => setGender(v as any)} className="w-2/3" />
+                  <Select value={gender} onChange={(v: string) => setGender(v as "male" | "female")} className="w-2/3" />
                 </div>
                 <Submit loading={loading}>دخول كزائر</Submit>
               </form>
@@ -149,7 +149,7 @@ function AuthPage() {
                 <Input placeholder="اسم المستخدم" value={username} onChange={setUsername} />
                 <div className="flex gap-3">
                   <Input type="number" placeholder="العمر" value={age} onChange={setAge} className="w-1/3" />
-                  <Select value={gender} onChange={(v) => setGender(v as any)} className="w-2/3" />
+                  <Select value={gender} onChange={(v: string) => setGender(v as "male" | "female")} className="w-2/3" />
                 </div>
                 <Input type="email" placeholder="البريد الإلكتروني" value={email} onChange={setEmail} />
                 <Input type="password" placeholder="كلمة المرور (6+ أحرف)" value={password} onChange={setPassword} />
