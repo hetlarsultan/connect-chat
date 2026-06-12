@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as NewsRouteImport } from './routes/news'
 import { Route as MembersRouteImport } from './routes/members'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as IndexRouteImport } from './routes/index'
@@ -18,6 +19,11 @@ import { Route as ProfileUserIdRouteImport } from './routes/profile.$userId'
 import { Route as MessagesUserIdRouteImport } from './routes/messages.$userId'
 import { Route as ChatRoomIdRouteImport } from './routes/chat.$roomId'
 
+const NewsRoute = NewsRouteImport.update({
+  id: '/news',
+  path: '/news',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const MembersRoute = MembersRouteImport.update({
   id: '/members',
   path: '/members',
@@ -63,6 +69,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/members': typeof MembersRoute
+  '/news': typeof NewsRoute
   '/chat/$roomId': typeof ChatRoomIdRoute
   '/messages/$userId': typeof MessagesUserIdRoute
   '/profile/$userId': typeof ProfileUserIdRoute
@@ -73,6 +80,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/members': typeof MembersRoute
+  '/news': typeof NewsRoute
   '/chat/$roomId': typeof ChatRoomIdRoute
   '/messages/$userId': typeof MessagesUserIdRoute
   '/profile/$userId': typeof ProfileUserIdRoute
@@ -84,6 +92,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/members': typeof MembersRoute
+  '/news': typeof NewsRoute
   '/chat/$roomId': typeof ChatRoomIdRoute
   '/messages/$userId': typeof MessagesUserIdRoute
   '/profile/$userId': typeof ProfileUserIdRoute
@@ -96,6 +105,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/members'
+    | '/news'
     | '/chat/$roomId'
     | '/messages/$userId'
     | '/profile/$userId'
@@ -106,6 +116,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/members'
+    | '/news'
     | '/chat/$roomId'
     | '/messages/$userId'
     | '/profile/$userId'
@@ -116,6 +127,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/members'
+    | '/news'
     | '/chat/$roomId'
     | '/messages/$userId'
     | '/profile/$userId'
@@ -127,6 +139,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthRoute: typeof AuthRoute
   MembersRoute: typeof MembersRoute
+  NewsRoute: typeof NewsRoute
   ChatRoomIdRoute: typeof ChatRoomIdRoute
   MessagesUserIdRoute: typeof MessagesUserIdRoute
   ProfileUserIdRoute: typeof ProfileUserIdRoute
@@ -136,6 +149,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/news': {
+      id: '/news'
+      path: '/news'
+      fullPath: '/news'
+      preLoaderRoute: typeof NewsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/members': {
       id: '/members'
       path: '/members'
@@ -199,6 +219,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthRoute: AuthRoute,
   MembersRoute: MembersRoute,
+  NewsRoute: NewsRoute,
   ChatRoomIdRoute: ChatRoomIdRoute,
   MessagesUserIdRoute: MessagesUserIdRoute,
   ProfileUserIdRoute: ProfileUserIdRoute,
