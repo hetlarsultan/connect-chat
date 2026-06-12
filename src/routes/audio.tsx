@@ -48,10 +48,10 @@ function AudioPage() {
           </div>
         </div>
 
-        <Toggle icon={MessageSquare} label="صوت رسائل الغرف" value={s.msgSound} onChange={(v) => update({ msgSound: v })} />
-        <Toggle icon={Bell} label="صوت الرسائل الخاصة" value={s.pmSound} onChange={(v) => update({ pmSound: v })} />
-        <Toggle icon={LogIn} label="صوت دخول الأعضاء" value={s.joinSound} onChange={(v) => update({ joinSound: v })} />
-        <Toggle icon={Bell} label="التنبيهات المنبثقة" value={s.notifications} onChange={(v) => update({ notifications: v })} />
+        <Toggle icon={MessageSquare} label="صوت رسائل الغرف" value={s.msgSound} onChange={(v: boolean) => update({ msgSound: v })} />
+        <Toggle icon={Bell} label="صوت الرسائل الخاصة" value={s.pmSound} onChange={(v: boolean) => update({ pmSound: v })} />
+        <Toggle icon={LogIn} label="صوت دخول الأعضاء" value={s.joinSound} onChange={(v: boolean) => update({ joinSound: v })} />
+        <Toggle icon={Bell} label="التنبيهات المنبثقة" value={s.notifications} onChange={(v: boolean) => update({ notifications: v })} />
       </div>
     </AppShell>
   );
