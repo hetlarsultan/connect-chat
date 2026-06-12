@@ -9,38 +9,207 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as RulesRouteImport } from './routes/rules'
+import { Route as NewsRouteImport } from './routes/news'
+import { Route as MembersRouteImport } from './routes/members'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AudioRouteImport } from './routes/audio'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ProfileIndexRouteImport } from './routes/profile.index'
+import { Route as MessagesIndexRouteImport } from './routes/messages.index'
+import { Route as ProfileUserIdRouteImport } from './routes/profile.$userId'
+import { Route as MessagesUserIdRouteImport } from './routes/messages.$userId'
+import { Route as ChatRoomIdRouteImport } from './routes/chat.$roomId'
 
+const RulesRoute = RulesRouteImport.update({
+  id: '/rules',
+  path: '/rules',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NewsRoute = NewsRouteImport.update({
+  id: '/news',
+  path: '/news',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MembersRoute = MembersRouteImport.update({
+  id: '/members',
+  path: '/members',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AudioRoute = AudioRouteImport.update({
+  id: '/audio',
+  path: '/audio',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ProfileIndexRoute = ProfileIndexRouteImport.update({
+  id: '/profile/',
+  path: '/profile/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MessagesIndexRoute = MessagesIndexRouteImport.update({
+  id: '/messages/',
+  path: '/messages/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProfileUserIdRoute = ProfileUserIdRouteImport.update({
+  id: '/profile/$userId',
+  path: '/profile/$userId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MessagesUserIdRoute = MessagesUserIdRouteImport.update({
+  id: '/messages/$userId',
+  path: '/messages/$userId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ChatRoomIdRoute = ChatRoomIdRouteImport.update({
+  id: '/chat/$roomId',
+  path: '/chat/$roomId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/audio': typeof AudioRoute
+  '/auth': typeof AuthRoute
+  '/members': typeof MembersRoute
+  '/news': typeof NewsRoute
+  '/rules': typeof RulesRoute
+  '/chat/$roomId': typeof ChatRoomIdRoute
+  '/messages/$userId': typeof MessagesUserIdRoute
+  '/profile/$userId': typeof ProfileUserIdRoute
+  '/messages/': typeof MessagesIndexRoute
+  '/profile/': typeof ProfileIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/audio': typeof AudioRoute
+  '/auth': typeof AuthRoute
+  '/members': typeof MembersRoute
+  '/news': typeof NewsRoute
+  '/rules': typeof RulesRoute
+  '/chat/$roomId': typeof ChatRoomIdRoute
+  '/messages/$userId': typeof MessagesUserIdRoute
+  '/profile/$userId': typeof ProfileUserIdRoute
+  '/messages': typeof MessagesIndexRoute
+  '/profile': typeof ProfileIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/audio': typeof AudioRoute
+  '/auth': typeof AuthRoute
+  '/members': typeof MembersRoute
+  '/news': typeof NewsRoute
+  '/rules': typeof RulesRoute
+  '/chat/$roomId': typeof ChatRoomIdRoute
+  '/messages/$userId': typeof MessagesUserIdRoute
+  '/profile/$userId': typeof ProfileUserIdRoute
+  '/messages/': typeof MessagesIndexRoute
+  '/profile/': typeof ProfileIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/audio'
+    | '/auth'
+    | '/members'
+    | '/news'
+    | '/rules'
+    | '/chat/$roomId'
+    | '/messages/$userId'
+    | '/profile/$userId'
+    | '/messages/'
+    | '/profile/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/audio'
+    | '/auth'
+    | '/members'
+    | '/news'
+    | '/rules'
+    | '/chat/$roomId'
+    | '/messages/$userId'
+    | '/profile/$userId'
+    | '/messages'
+    | '/profile'
+  id:
+    | '__root__'
+    | '/'
+    | '/audio'
+    | '/auth'
+    | '/members'
+    | '/news'
+    | '/rules'
+    | '/chat/$roomId'
+    | '/messages/$userId'
+    | '/profile/$userId'
+    | '/messages/'
+    | '/profile/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AudioRoute: typeof AudioRoute
+  AuthRoute: typeof AuthRoute
+  MembersRoute: typeof MembersRoute
+  NewsRoute: typeof NewsRoute
+  RulesRoute: typeof RulesRoute
+  ChatRoomIdRoute: typeof ChatRoomIdRoute
+  MessagesUserIdRoute: typeof MessagesUserIdRoute
+  ProfileUserIdRoute: typeof ProfileUserIdRoute
+  MessagesIndexRoute: typeof MessagesIndexRoute
+  ProfileIndexRoute: typeof ProfileIndexRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/rules': {
+      id: '/rules'
+      path: '/rules'
+      fullPath: '/rules'
+      preLoaderRoute: typeof RulesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/news': {
+      id: '/news'
+      path: '/news'
+      fullPath: '/news'
+      preLoaderRoute: typeof NewsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/members': {
+      id: '/members'
+      path: '/members'
+      fullPath: '/members'
+      preLoaderRoute: typeof MembersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/audio': {
+      id: '/audio'
+      path: '/audio'
+      fullPath: '/audio'
+      preLoaderRoute: typeof AudioRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -48,22 +217,57 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/profile/': {
+      id: '/profile/'
+      path: '/profile'
+      fullPath: '/profile/'
+      preLoaderRoute: typeof ProfileIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/messages/': {
+      id: '/messages/'
+      path: '/messages'
+      fullPath: '/messages/'
+      preLoaderRoute: typeof MessagesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/profile/$userId': {
+      id: '/profile/$userId'
+      path: '/profile/$userId'
+      fullPath: '/profile/$userId'
+      preLoaderRoute: typeof ProfileUserIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/messages/$userId': {
+      id: '/messages/$userId'
+      path: '/messages/$userId'
+      fullPath: '/messages/$userId'
+      preLoaderRoute: typeof MessagesUserIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/chat/$roomId': {
+      id: '/chat/$roomId'
+      path: '/chat/$roomId'
+      fullPath: '/chat/$roomId'
+      preLoaderRoute: typeof ChatRoomIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AudioRoute: AudioRoute,
+  AuthRoute: AuthRoute,
+  MembersRoute: MembersRoute,
+  NewsRoute: NewsRoute,
+  RulesRoute: RulesRoute,
+  ChatRoomIdRoute: ChatRoomIdRoute,
+  MessagesUserIdRoute: MessagesUserIdRoute,
+  ProfileUserIdRoute: ProfileUserIdRoute,
+  MessagesIndexRoute: MessagesIndexRoute,
+  ProfileIndexRoute: ProfileIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

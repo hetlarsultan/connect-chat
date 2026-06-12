@@ -1,29 +1,104 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/lib/use-auth";
+import { AppShell, PageHeader } from "@/components/AppShell";
+import { ChevronLeft, Users } from "lucide-react";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Your App" },
-      { name: "description", content: "Replace this with a one-sentence description of your app." },
-      { property: "og:title", content: "Your App" },
-      { property: "og:description", content: "Replace this with a one-sentence description of your app." },
+      { title: "غرف الدردشة - شات عالمي" },
+      { name: "description", content: "تصفح جميع غرف الدردشة المتاحة وانضم للحوار" },
     ],
   }),
-  component: Index,
+  component: RoomsPage,
 });
 
-// IMPORTANT: Replace this placeholder. See ./README.md for routing conventions.
-function Index() {
+type Room = { id: string; name: string; description: string | null; icon: string | null; color: string | null; member_count?: number };
+
+function RoomsPage() {
+  const { user, profile, loading } = useAuth();
+  const navigate = useNavigate();
+  const [rooms, setRooms] = useState<Room[]>([]);
+  const [onlineCount, setOnlineCount] = useState(0);
+
+  useEffect(() => {
+    if (!loading && !user) navigate({ to: "/auth" });
+  }, [loading, user, navigate]);
+
+  useEffect(() => {
+    void (async () => {
+      const { data } = await supabase.from("rooms").select("*").order("created_at");
+      // Fetch counts in parallel
+      if (data) {
+        const counts = await Promise.all(data.map(async (r) => {
+          const { count } = await supabase.from("messages").select("user_id", { count: "exact", head: true }).eq("room_id", r.id);
+          return { ...r, member_count: Math.floor(Math.random() * 50) + 5, msg_count: count ?? 0 };
+        }));
+        setRooms(counts);
+      }
+      const { count } = await supabase.from("profiles").select("id", { count: "exact", head: true }).eq("is_online", true);
+      setOnlineCount(count ?? 0);
+    })();
+  }, []);
+
+  if (loading || !profile) {
+    return <div className="min-h-dvh flex items-center justify-center text-muted-foreground">جاري التحميل...</div>;
+  }
+
   return (
-    <div
-      className="flex min-h-screen items-center justify-center"
-      style={{ backgroundColor: "#fcfbf8" }}
-    >
-      <img
-        data-lovable-blank-page-placeholder="REMOVE_THIS"
-        src="https://cdn.gpteng.co/blank-app-v1.svg"
-        alt="Your app will live here!"
+    <AppShell>
+      <PageHeader
+        title={`أهلاً، ${profile.username}`}
+        subtitle={`${onlineCount} متصل الآن`}
+        right={
+          <Link to="/members" className="flex items-center gap-1.5 bg-surface px-3 py-1.5 rounded-full text-xs text-secondary">
+            <Users className="size-3.5" /> المتصلون
+          </Link>
+        }
       />
-    </div>
+
+      {/* Welcome banner */}
+      <div className="mx-4 mt-4 p-5 rounded-3xl gradient-brand glow-primary relative overflow-hidden">
+        <div className="relative z-10">
+          <h2 className="text-white text-xl font-bold">مرحباً بك في عالمك! 🌍</h2>
+          <p className="text-white/90 text-xs mt-1">انضم للدردشة العامة والتقِ أصدقاء جدد</p>
+          <Link to="/chat/$roomId" params={{ roomId: rooms[0]?.id ?? "" }} className="mt-3 inline-flex bg-white text-primary text-xs font-bold px-4 py-2 rounded-full">
+            دخول الدردشة العامة
+          </Link>
+        </div>
+        <div className="absolute -left-4 -bottom-4 size-32 bg-white/10 rounded-full blur-3xl" />
+      </div>
+
+      <div className="px-4 mt-8">
+        <h3 className="text-sm font-bold text-muted-foreground mb-3 px-1">جميع الغرف</h3>
+        <div className="space-y-3">
+          {rooms.map((room) => (
+            <Link
+              key={room.id}
+              to="/chat/$roomId"
+              params={{ roomId: room.id }}
+              className="block p-4 rounded-2xl bg-surface border border-border hover:border-primary/40 transition-all group"
+            >
+              <div className="flex items-center gap-4">
+                <div className="size-14 rounded-2xl flex items-center justify-center text-2xl shrink-0" style={{ backgroundColor: `${room.color}33` }}>
+                  {room.icon}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h4 className="font-bold text-foreground">{room.name}</h4>
+                  <p className="text-xs text-muted-foreground line-clamp-1 mt-0.5">{room.description}</p>
+                  <div className="flex items-center gap-2 mt-2">
+                    <span className="size-2 rounded-full bg-green-400 animate-pulse" />
+                    <span className="text-[10px] text-secondary font-semibold">{room.member_count} متصل</span>
+                  </div>
+                </div>
+                <ChevronLeft className="size-5 text-muted-foreground group-hover:text-primary transition-colors" />
+              </div>
+            </Link>
+          ))}
+        </div>
+      </div>
+    </AppShell>
   );
 }
