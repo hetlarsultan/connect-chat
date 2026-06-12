@@ -9,10 +9,16 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as MembersRouteImport } from './routes/members'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ChatRoomIdRouteImport } from './routes/chat.$roomId'
 
+const MembersRoute = MembersRouteImport.update({
+  id: '/members',
+  path: '/members',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
@@ -32,35 +38,46 @@ const ChatRoomIdRoute = ChatRoomIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/members': typeof MembersRoute
   '/chat/$roomId': typeof ChatRoomIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/members': typeof MembersRoute
   '/chat/$roomId': typeof ChatRoomIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/members': typeof MembersRoute
   '/chat/$roomId': typeof ChatRoomIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth' | '/chat/$roomId'
+  fullPaths: '/' | '/auth' | '/members' | '/chat/$roomId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/chat/$roomId'
-  id: '__root__' | '/' | '/auth' | '/chat/$roomId'
+  to: '/' | '/auth' | '/members' | '/chat/$roomId'
+  id: '__root__' | '/' | '/auth' | '/members' | '/chat/$roomId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthRoute: typeof AuthRoute
+  MembersRoute: typeof MembersRoute
   ChatRoomIdRoute: typeof ChatRoomIdRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/members': {
+      id: '/members'
+      path: '/members'
+      fullPath: '/members'
+      preLoaderRoute: typeof MembersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/auth': {
       id: '/auth'
       path: '/auth'
@@ -88,6 +105,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthRoute: AuthRoute,
+  MembersRoute: MembersRoute,
   ChatRoomIdRoute: ChatRoomIdRoute,
 }
 export const routeTree = rootRouteImport
