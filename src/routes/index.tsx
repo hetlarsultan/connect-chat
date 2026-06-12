@@ -15,7 +15,7 @@ export const Route = createFileRoute("/")({
   component: RoomsPage,
 });
 
-type Room = { id: string; name: string; description: string; icon: string; color: string; member_count?: number };
+type Room = { id: string; name: string; description: string | null; icon: string | null; color: string | null; member_count?: number };
 
 function RoomsPage() {
   const { user, profile, loading } = useAuth();
