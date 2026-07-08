@@ -83,13 +83,14 @@ function ChatRoom() {
     const currentReply = replyTo;
     setInput("");
     setReplyTo(null);
-    const payload: Record<string, unknown> = { room_id: roomId, user_id: user.id, content: text };
-    if (currentReply) {
-      payload.reply_to_id = currentReply.id;
-      payload.reply_snippet = currentReply.content.slice(0, 80);
-      payload.reply_username = currentReply.profile?.username ?? null;
-    }
-    const { error } = await supabase.from("messages").insert(payload);
+    const { error } = await supabase.from("messages").insert({
+      room_id: roomId,
+      user_id: user.id,
+      content: text,
+      reply_to_id: currentReply?.id ?? null,
+      reply_snippet: currentReply ? currentReply.content.slice(0, 80) : null,
+      reply_username: currentReply?.profile?.username ?? null,
+    });
     if (error) {
       toast.error("تعذر الإرسال");
       setInput(text);
