@@ -5,7 +5,7 @@ import { useAuth, type Profile } from "@/lib/use-auth";
 import { AppShell } from "@/components/AppShell";
 import { Avatar } from "@/components/Avatar";
 import { UserActionsDialog } from "@/components/UserActions";
-import { ArrowRight, Send, Loader2 } from "lucide-react";
+import { ArrowRight, Send, Loader2, X, CornerUpLeft } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/chat/$roomId")({
@@ -17,6 +17,9 @@ type Msg = {
   content: string;
   user_id: string;
   created_at: string;
+  reply_to_id?: string | null;
+  reply_snippet?: string | null;
+  reply_username?: string | null;
   profile?: Profile;
 };
 
@@ -29,6 +32,8 @@ function ChatRoom() {
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
   const [selectedProfile, setSelectedProfile] = useState<Profile | null>(null);
+  const [replyTo, setReplyTo] = useState<Msg | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -41,7 +46,7 @@ function ChatRoom() {
       setRoom(r);
       const { data: msgs } = await supabase
         .from("messages")
-        .select("id, content, user_id, created_at")
+        .select("id, content, user_id, created_at, reply_to_id, reply_snippet, reply_username")
         .eq("room_id", roomId)
         .order("created_at", { ascending: true })
         .limit(100);
@@ -75,13 +80,29 @@ function ChatRoom() {
     if (!input.trim() || !user) return;
     setSending(true);
     const text = input.trim();
+    const currentReply = replyTo;
     setInput("");
-    const { error } = await supabase.from("messages").insert({ room_id: roomId, user_id: user.id, content: text });
+    setReplyTo(null);
+    const { error } = await supabase.from("messages").insert({
+      room_id: roomId,
+      user_id: user.id,
+      content: text,
+      reply_to_id: currentReply?.id ?? null,
+      reply_snippet: currentReply ? currentReply.content.slice(0, 80) : null,
+      reply_username: currentReply?.profile?.username ?? null,
+    });
     if (error) {
       toast.error("تعذر الإرسال");
       setInput(text);
+      setReplyTo(currentReply);
     }
     setSending(false);
+  }
+
+  function onUsernameClick(m: Msg) {
+    if (m.user_id === user?.id) return;
+    setReplyTo(m);
+    setTimeout(() => inputRef.current?.focus(), 50);
   }
 
   if (loading || !profile) return <div className="min-h-dvh flex items-center justify-center text-muted-foreground">جاري التحميل...</div>;
@@ -112,18 +133,29 @@ function ChatRoom() {
             <div className="text-center text-xs text-muted-foreground py-8">لا توجد رسائل بعد. كن أول من يكتب! ✨</div>
           )}
           {messages.map((m) => (
-            <MessageBubble key={m.id} msg={m} isSelf={m.user_id === user?.id} onAvatarClick={(p) => setSelectedProfile(p)} />
+            <MessageBubble key={m.id} msg={m} isSelf={m.user_id === user?.id} onAvatarClick={(p) => setSelectedProfile(p)} onUsernameClick={() => onUsernameClick(m)} />
           ))}
         </div>
 
         {/* Input */}
-        <form onSubmit={send} className="p-3 bg-surface border-t border-border">
+        <form onSubmit={send} className="p-3 bg-surface border-t border-border space-y-2">
+          {replyTo && (
+            <div className="flex items-center gap-2 bg-primary/10 border border-primary/30 rounded-xl px-3 py-2">
+              <CornerUpLeft className="size-4 text-primary shrink-0" />
+              <div className="flex-1 min-w-0">
+                <p className="text-[10px] font-bold text-primary">رد على {replyTo.profile?.username}</p>
+                <p className="text-xs text-muted-foreground truncate">{replyTo.content}</p>
+              </div>
+              <button type="button" onClick={() => setReplyTo(null)} className="text-muted-foreground p-1"><X className="size-4" /></button>
+            </div>
+          )}
           <div className="flex items-center gap-2 bg-background border border-border rounded-full p-1 pr-4">
             <input
+              ref={inputRef}
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder="اكتب رسالتك هنا..."
+              placeholder={replyTo ? `رد على ${replyTo.profile?.username}...` : "اكتب رسالتك هنا..."}
               maxLength={500}
               className="flex-1 bg-transparent py-2 text-sm focus:outline-none"
             />
@@ -139,20 +171,31 @@ function ChatRoom() {
   );
 }
 
-function MessageBubble({ msg, isSelf, onAvatarClick }: { msg: Msg; isSelf: boolean; onAvatarClick: (p: Profile) => void }) {
+function MessageBubble({ msg, isSelf, onAvatarClick, onUsernameClick }: { msg: Msg; isSelf: boolean; onAvatarClick: (p: Profile) => void; onUsernameClick: () => void }) {
   const p = msg.profile;
   if (!p) return null;
   return (
     <div className={`flex gap-2 items-end ${isSelf ? "flex-row-reverse" : ""}`}>
       <Avatar profile={p} size="sm" onClick={() => onAvatarClick(p)} />
       <div className="flex flex-col max-w-[75%]">
-        <span className="text-[10px] font-bold mb-1 px-1" style={{ color: p.name_color }}>
+        <button
+          type="button"
+          onClick={onUsernameClick}
+          className="text-[10px] font-bold mb-1 px-1 text-right hover:underline"
+          style={{ color: p.name_color }}
+        >
           {p.username} {p.age && <span className="text-muted-foreground font-normal">• {p.age}</span>}
-        </span>
+        </button>
         <div
           className={`px-3 py-2 rounded-2xl text-sm leading-relaxed border ${isSelf ? "bg-primary/15 border-primary/30 rounded-bl-none" : "bg-surface border-border rounded-br-none"}`}
           style={{ color: p.text_color }}
         >
+          {msg.reply_snippet && (
+            <div className="mb-1.5 pb-1.5 border-b border-border/50 opacity-70">
+              <p className="text-[9px] font-bold text-primary">↩ {msg.reply_username}</p>
+              <p className="text-[11px] truncate">{msg.reply_snippet}</p>
+            </div>
+          )}
           {msg.content}
         </div>
       </div>

@@ -1,11 +1,12 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/use-auth";
 import { AppShell, PageHeader } from "@/components/AppShell";
 import { Avatar } from "@/components/Avatar";
-import { LogOut, Save, Loader2, Palette } from "lucide-react";
+import { LogOut, Save, Loader2, Camera } from "lucide-react";
 import { toast } from "sonner";
+import { uploadAvatar } from "@/lib/storage";
 
 export const Route = createFileRoute("/profile/")({
   head: () => ({ meta: [{ title: "ملفي الشخصي - شات عالمي" }] }),
@@ -25,6 +26,27 @@ function ProfilePage() {
   const [nameColor, setNameColor] = useState("#8b5cf6");
   const [textColor, setTextColor] = useState("#e2e8f0");
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  async function onPickFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+    if (file.size > 5 * 1024 * 1024) { toast.error("الحد الأقصى 5 ميجابايت"); return; }
+    setUploading(true);
+    try {
+      const url = await uploadAvatar(user.id, file);
+      setAvatarUrl(url);
+      await supabase.from("profiles").update({ avatar_url: url }).eq("id", user.id);
+      await refreshProfile();
+      toast.success("تم تحديث الصورة");
+    } catch (err) {
+      toast.error("تعذر رفع الصورة");
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  }
 
   useEffect(() => {
     if (!loading && !user) navigate({ to: "/auth" });
@@ -74,7 +96,19 @@ function ProfilePage() {
       } />
 
       <div className="p-6 flex flex-col items-center gap-3 bg-gradient-to-b from-primary/10 to-transparent">
-        <Avatar profile={{ ...profile, name_color: nameColor, avatar_url: avatarUrl || profile.avatar_url }} size="xl" />
+        <div className="relative">
+          <Avatar profile={{ ...profile, name_color: nameColor, avatar_url: avatarUrl || profile.avatar_url }} size="xl" />
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={uploading}
+            className="absolute -bottom-1 -left-1 size-8 rounded-full gradient-brand text-white flex items-center justify-center shadow-lg ring-2 ring-background disabled:opacity-60"
+            aria-label="تغيير الصورة"
+          >
+            {uploading ? <Loader2 className="size-4 animate-spin" /> : <Camera className="size-4" />}
+          </button>
+          <input ref={fileInputRef} type="file" accept="image/*" hidden onChange={onPickFile} />
+        </div>
         <h2 className="text-xl font-bold" style={{ color: nameColor }}>{username}</h2>
         <p className="text-xs text-muted-foreground">{profile.gender === "female" ? "أنثى" : "ذكر"} {age && `• ${age} سنة`} {profile.is_guest && "• زائر"}</p>
         <p className="text-[10px] text-muted-foreground font-mono">ID: {profile.id.slice(0, 8)}</p>
@@ -93,7 +127,7 @@ function ProfilePage() {
           <>
             <Field label="اسم المستخدم"><input value={username} onChange={(e) => setUsername(e.target.value)} className="input" /></Field>
             <Field label="العمر"><input type="number" value={age} onChange={(e) => setAge(e.target.value)} className="input" /></Field>
-            <Field label="رابط الصورة الشخصية"><input value={avatarUrl} onChange={(e) => setAvatarUrl(e.target.value)} placeholder="https://..." className="input" /></Field>
+            <p className="text-[11px] text-muted-foreground">اضغط على أيقونة الكاميرا فوق صورتك لتغييرها 📷</p>
             <Field label="النبذة"><textarea value={bio} onChange={(e) => setBio(e.target.value)} maxLength={150} rows={3} className="input resize-none" /></Field>
           </>
         )}

@@ -82,7 +82,10 @@ function RoomsPage() {
               className="block p-4 rounded-2xl bg-surface border border-border hover:border-primary/40 transition-all group"
             >
               <div className="flex items-center gap-4">
-                <div className="size-14 rounded-2xl flex items-center justify-center text-2xl shrink-0" style={{ backgroundColor: `${room.color}33` }}>
+                <div
+                  className="size-16 rounded-2xl flex items-center justify-center text-3xl shrink-0 shadow-lg"
+                  style={{ backgroundColor: `${room.color}33`, boxShadow: `0 4px 20px ${room.color}22` }}
+                >
                   {room.icon}
                 </div>
                 <div className="flex-1 min-w-0">
