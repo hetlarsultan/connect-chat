@@ -1,11 +1,12 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/use-auth";
 import { AppShell, PageHeader } from "@/components/AppShell";
 import { Avatar } from "@/components/Avatar";
-import { LogOut, Save, Loader2, Palette } from "lucide-react";
+import { LogOut, Save, Loader2, Camera } from "lucide-react";
 import { toast } from "sonner";
+import { uploadAvatar } from "@/lib/storage";
 
 export const Route = createFileRoute("/profile/")({
   head: () => ({ meta: [{ title: "ملفي الشخصي - شات عالمي" }] }),
