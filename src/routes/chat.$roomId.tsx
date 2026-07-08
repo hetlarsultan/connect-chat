@@ -32,6 +32,8 @@ function ChatRoom() {
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
   const [selectedProfile, setSelectedProfile] = useState<Profile | null>(null);
+  const [replyTo, setReplyTo] = useState<Msg | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -44,7 +46,7 @@ function ChatRoom() {
       setRoom(r);
       const { data: msgs } = await supabase
         .from("messages")
-        .select("id, content, user_id, created_at")
+        .select("id, content, user_id, created_at, reply_to_id, reply_snippet, reply_username")
         .eq("room_id", roomId)
         .order("created_at", { ascending: true })
         .limit(100);
@@ -78,13 +80,28 @@ function ChatRoom() {
     if (!input.trim() || !user) return;
     setSending(true);
     const text = input.trim();
+    const currentReply = replyTo;
     setInput("");
-    const { error } = await supabase.from("messages").insert({ room_id: roomId, user_id: user.id, content: text });
+    setReplyTo(null);
+    const payload: Record<string, unknown> = { room_id: roomId, user_id: user.id, content: text };
+    if (currentReply) {
+      payload.reply_to_id = currentReply.id;
+      payload.reply_snippet = currentReply.content.slice(0, 80);
+      payload.reply_username = currentReply.profile?.username ?? null;
+    }
+    const { error } = await supabase.from("messages").insert(payload);
     if (error) {
       toast.error("تعذر الإرسال");
       setInput(text);
+      setReplyTo(currentReply);
     }
     setSending(false);
+  }
+
+  function onUsernameClick(m: Msg) {
+    if (m.user_id === user?.id) return;
+    setReplyTo(m);
+    setTimeout(() => inputRef.current?.focus(), 50);
   }
 
   if (loading || !profile) return <div className="min-h-dvh flex items-center justify-center text-muted-foreground">جاري التحميل...</div>;
