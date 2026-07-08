@@ -5,7 +5,7 @@ import { useAuth, type Profile } from "@/lib/use-auth";
 import { AppShell } from "@/components/AppShell";
 import { Avatar } from "@/components/Avatar";
 import { UserActionsDialog } from "@/components/UserActions";
-import { ArrowRight, Send, Loader2 } from "lucide-react";
+import { ArrowRight, Send, Loader2, X, CornerUpLeft } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/chat/$roomId")({
@@ -17,6 +17,9 @@ type Msg = {
   content: string;
   user_id: string;
   created_at: string;
+  reply_to_id?: string | null;
+  reply_snippet?: string | null;
+  reply_username?: string | null;
   profile?: Profile;
 };
 
