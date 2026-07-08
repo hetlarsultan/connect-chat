@@ -26,6 +26,27 @@ function ProfilePage() {
   const [nameColor, setNameColor] = useState("#8b5cf6");
   const [textColor, setTextColor] = useState("#e2e8f0");
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  async function onPickFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+    if (file.size > 5 * 1024 * 1024) { toast.error("الحد الأقصى 5 ميجابايت"); return; }
+    setUploading(true);
+    try {
+      const url = await uploadAvatar(user.id, file);
+      setAvatarUrl(url);
+      await supabase.from("profiles").update({ avatar_url: url }).eq("id", user.id);
+      await refreshProfile();
+      toast.success("تم تحديث الصورة");
+    } catch (err) {
+      toast.error("تعذر رفع الصورة");
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  }
 
   useEffect(() => {
     if (!loading && !user) navigate({ to: "/auth" });
