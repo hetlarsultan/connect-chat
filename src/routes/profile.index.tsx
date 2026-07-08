@@ -96,7 +96,19 @@ function ProfilePage() {
       } />
 
       <div className="p-6 flex flex-col items-center gap-3 bg-gradient-to-b from-primary/10 to-transparent">
-        <Avatar profile={{ ...profile, name_color: nameColor, avatar_url: avatarUrl || profile.avatar_url }} size="xl" />
+        <div className="relative">
+          <Avatar profile={{ ...profile, name_color: nameColor, avatar_url: avatarUrl || profile.avatar_url }} size="xl" />
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={uploading}
+            className="absolute -bottom-1 -left-1 size-8 rounded-full gradient-brand text-white flex items-center justify-center shadow-lg ring-2 ring-background disabled:opacity-60"
+            aria-label="تغيير الصورة"
+          >
+            {uploading ? <Loader2 className="size-4 animate-spin" /> : <Camera className="size-4" />}
+          </button>
+          <input ref={fileInputRef} type="file" accept="image/*" hidden onChange={onPickFile} />
+        </div>
         <h2 className="text-xl font-bold" style={{ color: nameColor }}>{username}</h2>
         <p className="text-xs text-muted-foreground">{profile.gender === "female" ? "أنثى" : "ذكر"} {age && `• ${age} سنة`} {profile.is_guest && "• زائر"}</p>
         <p className="text-[10px] text-muted-foreground font-mono">ID: {profile.id.slice(0, 8)}</p>
