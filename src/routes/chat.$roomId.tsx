@@ -133,18 +133,29 @@ function ChatRoom() {
             <div className="text-center text-xs text-muted-foreground py-8">لا توجد رسائل بعد. كن أول من يكتب! ✨</div>
           )}
           {messages.map((m) => (
-            <MessageBubble key={m.id} msg={m} isSelf={m.user_id === user?.id} onAvatarClick={(p) => setSelectedProfile(p)} />
+            <MessageBubble key={m.id} msg={m} isSelf={m.user_id === user?.id} onAvatarClick={(p) => setSelectedProfile(p)} onUsernameClick={() => onUsernameClick(m)} />
           ))}
         </div>
 
         {/* Input */}
-        <form onSubmit={send} className="p-3 bg-surface border-t border-border">
+        <form onSubmit={send} className="p-3 bg-surface border-t border-border space-y-2">
+          {replyTo && (
+            <div className="flex items-center gap-2 bg-primary/10 border border-primary/30 rounded-xl px-3 py-2">
+              <CornerUpLeft className="size-4 text-primary shrink-0" />
+              <div className="flex-1 min-w-0">
+                <p className="text-[10px] font-bold text-primary">رد على {replyTo.profile?.username}</p>
+                <p className="text-xs text-muted-foreground truncate">{replyTo.content}</p>
+              </div>
+              <button type="button" onClick={() => setReplyTo(null)} className="text-muted-foreground p-1"><X className="size-4" /></button>
+            </div>
+          )}
           <div className="flex items-center gap-2 bg-background border border-border rounded-full p-1 pr-4">
             <input
+              ref={inputRef}
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder="اكتب رسالتك هنا..."
+              placeholder={replyTo ? `رد على ${replyTo.profile?.username}...` : "اكتب رسالتك هنا..."}
               maxLength={500}
               className="flex-1 bg-transparent py-2 text-sm focus:outline-none"
             />
@@ -160,20 +171,31 @@ function ChatRoom() {
   );
 }
 
-function MessageBubble({ msg, isSelf, onAvatarClick }: { msg: Msg; isSelf: boolean; onAvatarClick: (p: Profile) => void }) {
+function MessageBubble({ msg, isSelf, onAvatarClick, onUsernameClick }: { msg: Msg; isSelf: boolean; onAvatarClick: (p: Profile) => void; onUsernameClick: () => void }) {
   const p = msg.profile;
   if (!p) return null;
   return (
     <div className={`flex gap-2 items-end ${isSelf ? "flex-row-reverse" : ""}`}>
       <Avatar profile={p} size="sm" onClick={() => onAvatarClick(p)} />
       <div className="flex flex-col max-w-[75%]">
-        <span className="text-[10px] font-bold mb-1 px-1" style={{ color: p.name_color }}>
+        <button
+          type="button"
+          onClick={onUsernameClick}
+          className="text-[10px] font-bold mb-1 px-1 text-right hover:underline"
+          style={{ color: p.name_color }}
+        >
           {p.username} {p.age && <span className="text-muted-foreground font-normal">• {p.age}</span>}
-        </span>
+        </button>
         <div
           className={`px-3 py-2 rounded-2xl text-sm leading-relaxed border ${isSelf ? "bg-primary/15 border-primary/30 rounded-bl-none" : "bg-surface border-border rounded-br-none"}`}
           style={{ color: p.text_color }}
         >
+          {msg.reply_snippet && (
+            <div className="mb-1.5 pb-1.5 border-b border-border/50 opacity-70">
+              <p className="text-[9px] font-bold text-primary">↩ {msg.reply_username}</p>
+              <p className="text-[11px] truncate">{msg.reply_snippet}</p>
+            </div>
+          )}
           {msg.content}
         </div>
       </div>
