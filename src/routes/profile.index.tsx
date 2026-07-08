@@ -127,7 +127,7 @@ function ProfilePage() {
           <>
             <Field label="اسم المستخدم"><input value={username} onChange={(e) => setUsername(e.target.value)} className="input" /></Field>
             <Field label="العمر"><input type="number" value={age} onChange={(e) => setAge(e.target.value)} className="input" /></Field>
-            <Field label="رابط الصورة الشخصية"><input value={avatarUrl} onChange={(e) => setAvatarUrl(e.target.value)} placeholder="https://..." className="input" /></Field>
+            <p className="text-[11px] text-muted-foreground">اضغط على أيقونة الكاميرا فوق صورتك لتغييرها 📷</p>
             <Field label="النبذة"><textarea value={bio} onChange={(e) => setBio(e.target.value)} maxLength={150} rows={3} className="input resize-none" /></Field>
           </>
         )}
