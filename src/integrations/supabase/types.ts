@@ -43,6 +43,9 @@ export type Database = {
           content: string
           created_at: string
           id: string
+          reply_snippet: string | null
+          reply_to_id: string | null
+          reply_username: string | null
           room_id: string
           user_id: string
         }
@@ -50,6 +53,9 @@ export type Database = {
           content: string
           created_at?: string
           id?: string
+          reply_snippet?: string | null
+          reply_to_id?: string | null
+          reply_username?: string | null
           room_id: string
           user_id: string
         }
@@ -57,10 +63,20 @@ export type Database = {
           content?: string
           created_at?: string
           id?: string
+          reply_snippet?: string | null
+          reply_to_id?: string | null
+          reply_username?: string | null
           room_id?: string
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "messages_reply_to_id_fkey"
+            columns: ["reply_to_id"]
+            isOneToOne: false
+            referencedRelation: "messages"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "messages_room_id_fkey"
             columns: ["room_id"]
@@ -75,25 +91,31 @@ export type Database = {
           content: string
           created_at: string
           id: string
+          image_path: string | null
           read: boolean | null
           receiver_id: string
           sender_id: string
+          viewed_at: string | null
         }
         Insert: {
           content: string
           created_at?: string
           id?: string
+          image_path?: string | null
           read?: boolean | null
           receiver_id: string
           sender_id: string
+          viewed_at?: string | null
         }
         Update: {
           content?: string
           created_at?: string
           id?: string
+          image_path?: string | null
           read?: boolean | null
           receiver_id?: string
           sender_id?: string
+          viewed_at?: string | null
         }
         Relationships: []
       }
