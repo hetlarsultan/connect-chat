@@ -50,14 +50,20 @@ function PrivateChat() {
 
   async function acceptFriend() {
     if (!friendship) return;
+    const prev = friendship;
+    setFriendship({ ...friendship, status: "accepted" });
     const { error } = await supabase.from("friendships").update({ status: "accepted" }).eq("id", friendship.id);
-    if (error) toast.error("تعذر القبول"); else { toast.success("تمت الإضافة"); void loadFriendship(); }
+    if (error) { toast.error("تعذر القبول"); setFriendship(prev); }
+    else toast.success("تمت الإضافة ✅");
   }
 
   async function rejectFriend() {
     if (!friendship) return;
+    const prev = friendship;
+    setFriendship(null);
     const { error } = await supabase.from("friendships").delete().eq("id", friendship.id);
-    if (error) toast.error("تعذر الرفض"); else { setFriendship(null); toast.success("تم الرفض"); }
+    if (error) { toast.error("تعذر الرفض"); setFriendship(prev); }
+    else toast.success("تم الرفض");
   }
 
   useEffect(() => {
