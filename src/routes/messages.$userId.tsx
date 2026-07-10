@@ -160,14 +160,22 @@ function PrivateChat() {
   return (
     <AppShell hideNav>
       <div className="flex flex-col h-dvh max-w-md mx-auto">
-        <header className="sticky top-0 z-30 bg-background/90 backdrop-blur-xl border-b border-border px-3 py-3 flex items-center gap-3">
-          <Link to="/messages" className="p-2 -mr-2 text-muted-foreground"><ArrowRight className="size-5" /></Link>
+        <header className="sticky top-0 z-30 bg-background/90 backdrop-blur-xl border-b border-border px-3 py-2.5 flex items-center gap-3">
+          <Link to="/messages" className="p-1.5 -mr-2 text-muted-foreground"><ArrowRight className="size-4" /></Link>
           <Avatar profile={partner} size="md" />
           <Link to="/profile/$userId" params={{ userId: partner.id }} className="flex-1 min-w-0">
             <h1 className="font-bold text-sm truncate" style={{ color: partner.name_color }}>{partner.username}</h1>
             <p className="text-[10px] text-secondary">{partner.is_online ? "متصل الآن" : "غير متصل"}</p>
           </Link>
         </header>
+
+        {friendship?.status === "pending" && friendship.addressee_id === user?.id && (
+          <div className="mx-3 mt-3 bg-primary/10 border border-primary/30 rounded-2xl p-3 flex items-center gap-2">
+            <p className="flex-1 text-xs font-bold">أرسل لك طلب صداقة 💌</p>
+            <button onClick={acceptFriend} className="size-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center" aria-label="قبول"><Check className="size-3.5" /></button>
+            <button onClick={rejectFriend} className="size-8 rounded-full bg-background border border-border flex items-center justify-center" aria-label="رفض"><X className="size-3.5" /></button>
+          </div>
+        )}
 
         <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
           {messages.length === 0 && (
