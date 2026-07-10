@@ -219,15 +219,15 @@ function PrivateChat() {
               type="button"
               onClick={() => fileRef.current?.click()}
               disabled={uploading}
-              className="size-10 rounded-full flex items-center justify-center text-primary hover:bg-primary/10 disabled:opacity-50"
+              className="size-9 rounded-full flex items-center justify-center text-primary hover:bg-primary/10 disabled:opacity-50"
               aria-label="إرسال صورة مؤقتة"
             >
-              {uploading ? <Loader2 className="size-4 animate-spin" /> : <ImagePlus className="size-5" />}
+              {uploading ? <Loader2 className="size-3.5 animate-spin" /> : <ImagePlus className="size-4" />}
             </button>
             <input ref={fileRef} type="file" accept="image/*" hidden onChange={onPickImage} />
             <input value={input} onChange={(e) => setInput(e.target.value)} placeholder="اكتب رسالة..." maxLength={500} className="flex-1 bg-transparent py-2 text-sm focus:outline-none" />
-            <button type="submit" disabled={sending || !input.trim()} className="size-10 rounded-full gradient-brand flex items-center justify-center text-white disabled:opacity-50">
-              {sending ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4 rotate-180" />}
+            <button type="submit" disabled={sending || !input.trim()} className="size-9 rounded-full gradient-brand flex items-center justify-center text-white disabled:opacity-50">
+              {sending ? <Loader2 className="size-3.5 animate-spin" /> : <Send className="size-3.5 rotate-180" />}
             </button>
           </div>
         </form>
