@@ -111,9 +111,9 @@ function ChatRoom() {
     <AppShell hideNav>
       <div className="flex flex-col h-dvh max-w-md mx-auto">
         {/* Header */}
-        <header className="sticky top-0 z-30 bg-background/90 backdrop-blur-xl border-b border-border px-3 py-3 flex items-center gap-3">
-          <Link to="/" className="p-2 -mr-2 text-muted-foreground"><ArrowRight className="size-5" /></Link>
-          <div className="size-10 rounded-full flex items-center justify-center text-xl" style={{ backgroundColor: `${room?.color ?? "#8b5cf6"}33` }}>{room?.icon ?? "💬"}</div>
+        <header className="sticky top-0 z-30 bg-background/90 backdrop-blur-xl border-b border-border px-3 py-2.5 flex items-center gap-3">
+          <Link to="/" className="p-1.5 -mr-2 text-muted-foreground"><ArrowRight className="size-4" /></Link>
+          <div className="size-9 rounded-full flex items-center justify-center text-lg" style={{ backgroundColor: `${room?.color ?? "#8b5cf6"}33` }}>{room?.icon ?? "💬"}</div>
           <div className="flex-1 min-w-0">
             <h1 className="font-bold text-sm truncate">{room?.name ?? "..."}</h1>
             <p className="text-[10px] text-secondary">متصل الآن</p>
