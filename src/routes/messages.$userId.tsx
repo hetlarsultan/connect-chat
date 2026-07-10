@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth, type Profile } from "@/lib/use-auth";
 import { AppShell } from "@/components/AppShell";
 import { Avatar } from "@/components/Avatar";
-import { ArrowRight, Send, Loader2, ImagePlus, Eye, EyeOff } from "lucide-react";
+import { ArrowRight, Send, Loader2, ImagePlus, Eye, EyeOff, Check, X } from "lucide-react";
 import { toast } from "sonner";
 import { uploadPrivateImage, getPrivateImageUrl, deletePrivateImage } from "@/lib/storage";
 
