@@ -34,8 +34,31 @@ function PrivateChat() {
   const [uploading, setUploading] = useState(false);
   const [viewingUrl, setViewingUrl] = useState<string | null>(null);
   const [viewingId, setViewingId] = useState<string | null>(null);
+  const [friendship, setFriendship] = useState<{ id: string; requester_id: string; addressee_id: string; status: string } | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+
+  async function loadFriendship() {
+    if (!user) return;
+    const { data } = await supabase
+      .from("friendships")
+      .select("*")
+      .or(`and(requester_id.eq.${user.id},addressee_id.eq.${partnerId}),and(requester_id.eq.${partnerId},addressee_id.eq.${user.id})`)
+      .maybeSingle();
+    setFriendship(data as any);
+  }
+
+  async function acceptFriend() {
+    if (!friendship) return;
+    const { error } = await supabase.from("friendships").update({ status: "accepted" }).eq("id", friendship.id);
+    if (error) toast.error("تعذر القبول"); else { toast.success("تمت الإضافة"); void loadFriendship(); }
+  }
+
+  async function rejectFriend() {
+    if (!friendship) return;
+    const { error } = await supabase.from("friendships").delete().eq("id", friendship.id);
+    if (error) toast.error("تعذر الرفض"); else { setFriendship(null); toast.success("تم الرفض"); }
+  }
 
   useEffect(() => {
     if (!loading && !user) navigate({ to: "/auth" });
