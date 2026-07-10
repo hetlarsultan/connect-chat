@@ -170,8 +170,8 @@ function ChatRoom() {
               maxLength={500}
               className="flex-1 bg-transparent py-2 text-sm focus:outline-none"
             />
-            <button type="submit" disabled={sending || !input.trim()} className="size-10 rounded-full gradient-brand flex items-center justify-center text-white disabled:opacity-50">
-              {sending ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4 rotate-180" />}
+            <button type="submit" disabled={sending || !input.trim()} className="size-9 rounded-full gradient-brand flex items-center justify-center text-white disabled:opacity-50">
+              {sending ? <Loader2 className="size-3.5 animate-spin" /> : <Send className="size-3.5 rotate-180" />}
             </button>
           </div>
         </form>
