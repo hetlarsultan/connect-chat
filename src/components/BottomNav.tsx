@@ -19,10 +19,10 @@ export function BottomNav() {
             <Link
               key={to}
               to={to}
-              className="flex flex-col items-center gap-1 py-2 rounded-xl transition-colors"
+              className="flex flex-col items-center gap-0.5 py-1.5 rounded-xl transition-colors"
             >
-              <Icon className={`size-5 ${active ? "text-primary" : "text-muted-foreground"}`} />
-              <span className={`text-[10px] font-semibold ${active ? "text-primary" : "text-muted-foreground"}`}>{label}</span>
+              <Icon className={`size-[16px] ${active ? "text-primary" : "text-muted-foreground"}`} />
+              <span className={`text-[9px] font-semibold ${active ? "text-primary" : "text-muted-foreground"}`}>{label}</span>
             </Link>
           );
         })}

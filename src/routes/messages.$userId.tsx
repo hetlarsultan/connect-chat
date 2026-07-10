@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth, type Profile } from "@/lib/use-auth";
 import { AppShell } from "@/components/AppShell";
 import { Avatar } from "@/components/Avatar";
-import { ArrowRight, Send, Loader2, ImagePlus, Eye, EyeOff } from "lucide-react";
+import { ArrowRight, Send, Loader2, ImagePlus, Eye, EyeOff, Check, X } from "lucide-react";
 import { toast } from "sonner";
 import { uploadPrivateImage, getPrivateImageUrl, deletePrivateImage } from "@/lib/storage";
 
@@ -34,8 +34,31 @@ function PrivateChat() {
   const [uploading, setUploading] = useState(false);
   const [viewingUrl, setViewingUrl] = useState<string | null>(null);
   const [viewingId, setViewingId] = useState<string | null>(null);
+  const [friendship, setFriendship] = useState<{ id: string; requester_id: string; addressee_id: string; status: string } | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+
+  async function loadFriendship() {
+    if (!user) return;
+    const { data } = await supabase
+      .from("friendships")
+      .select("*")
+      .or(`and(requester_id.eq.${user.id},addressee_id.eq.${partnerId}),and(requester_id.eq.${partnerId},addressee_id.eq.${user.id})`)
+      .maybeSingle();
+    setFriendship(data as any);
+  }
+
+  async function acceptFriend() {
+    if (!friendship) return;
+    const { error } = await supabase.from("friendships").update({ status: "accepted" }).eq("id", friendship.id);
+    if (error) toast.error("تعذر القبول"); else { toast.success("تمت الإضافة"); void loadFriendship(); }
+  }
+
+  async function rejectFriend() {
+    if (!friendship) return;
+    const { error } = await supabase.from("friendships").delete().eq("id", friendship.id);
+    if (error) toast.error("تعذر الرفض"); else { setFriendship(null); toast.success("تم الرفض"); }
+  }
 
   useEffect(() => {
     if (!loading && !user) navigate({ to: "/auth" });
@@ -54,6 +77,7 @@ function PrivateChat() {
       if (msgs) setMessages(msgs as PM[]);
       await supabase.from("private_messages").update({ read: true }).eq("sender_id", partnerId).eq("receiver_id", user.id).eq("read", false);
     })();
+    void loadFriendship();
   }, [user, partnerId]);
 
   useEffect(() => {
@@ -136,14 +160,22 @@ function PrivateChat() {
   return (
     <AppShell hideNav>
       <div className="flex flex-col h-dvh max-w-md mx-auto">
-        <header className="sticky top-0 z-30 bg-background/90 backdrop-blur-xl border-b border-border px-3 py-3 flex items-center gap-3">
-          <Link to="/messages" className="p-2 -mr-2 text-muted-foreground"><ArrowRight className="size-5" /></Link>
+        <header className="sticky top-0 z-30 bg-background/90 backdrop-blur-xl border-b border-border px-3 py-2.5 flex items-center gap-3">
+          <Link to="/messages" className="p-1.5 -mr-2 text-muted-foreground"><ArrowRight className="size-4" /></Link>
           <Avatar profile={partner} size="md" />
           <Link to="/profile/$userId" params={{ userId: partner.id }} className="flex-1 min-w-0">
             <h1 className="font-bold text-sm truncate" style={{ color: partner.name_color }}>{partner.username}</h1>
             <p className="text-[10px] text-secondary">{partner.is_online ? "متصل الآن" : "غير متصل"}</p>
           </Link>
         </header>
+
+        {friendship?.status === "pending" && friendship.addressee_id === user?.id && (
+          <div className="mx-3 mt-3 bg-primary/10 border border-primary/30 rounded-2xl p-3 flex items-center gap-2">
+            <p className="flex-1 text-xs font-bold">أرسل لك طلب صداقة 💌</p>
+            <button onClick={acceptFriend} className="size-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center" aria-label="قبول"><Check className="size-3.5" /></button>
+            <button onClick={rejectFriend} className="size-8 rounded-full bg-background border border-border flex items-center justify-center" aria-label="رفض"><X className="size-3.5" /></button>
+          </div>
+        )}
 
         <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
           {messages.length === 0 && (
@@ -187,15 +219,15 @@ function PrivateChat() {
               type="button"
               onClick={() => fileRef.current?.click()}
               disabled={uploading}
-              className="size-10 rounded-full flex items-center justify-center text-primary hover:bg-primary/10 disabled:opacity-50"
+              className="size-9 rounded-full flex items-center justify-center text-primary hover:bg-primary/10 disabled:opacity-50"
               aria-label="إرسال صورة مؤقتة"
             >
-              {uploading ? <Loader2 className="size-4 animate-spin" /> : <ImagePlus className="size-5" />}
+              {uploading ? <Loader2 className="size-3.5 animate-spin" /> : <ImagePlus className="size-4" />}
             </button>
             <input ref={fileRef} type="file" accept="image/*" hidden onChange={onPickImage} />
             <input value={input} onChange={(e) => setInput(e.target.value)} placeholder="اكتب رسالة..." maxLength={500} className="flex-1 bg-transparent py-2 text-sm focus:outline-none" />
-            <button type="submit" disabled={sending || !input.trim()} className="size-10 rounded-full gradient-brand flex items-center justify-center text-white disabled:opacity-50">
-              {sending ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4 rotate-180" />}
+            <button type="submit" disabled={sending || !input.trim()} className="size-9 rounded-full gradient-brand flex items-center justify-center text-white disabled:opacity-50">
+              {sending ? <Loader2 className="size-3.5 animate-spin" /> : <Send className="size-3.5 rotate-180" />}
             </button>
           </div>
         </form>

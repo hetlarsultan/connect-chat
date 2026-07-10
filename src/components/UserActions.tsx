@@ -41,18 +41,18 @@ export function UserActionsDialog({ profile, open, onOpenChange }: { profile: Pr
           </div>
         </div>
         <div className="grid grid-cols-3 gap-2 pt-2">
-          <Link to="/profile/$userId" params={{ userId: profile.id }} onClick={() => onOpenChange(false)} className="flex flex-col items-center gap-1 p-3 rounded-xl bg-background hover:bg-accent transition-colors">
-            <User className="size-5 text-primary" />
+          <Link to="/profile/$userId" params={{ userId: profile.id }} onClick={() => onOpenChange(false)} className="flex flex-col items-center gap-1 p-2.5 rounded-xl bg-background hover:bg-accent transition-colors">
+            <User className="size-4 text-primary" />
             <span className="text-[10px] font-semibold">الملف</span>
           </Link>
           {!isSelf && (
             <>
-              <Link to="/messages/$userId" params={{ userId: profile.id }} onClick={() => onOpenChange(false)} className="flex flex-col items-center gap-1 p-3 rounded-xl bg-background hover:bg-accent transition-colors">
-                <MessageCircle className="size-5 text-secondary" />
+              <Link to="/messages/$userId" params={{ userId: profile.id }} onClick={() => onOpenChange(false)} className="flex flex-col items-center gap-1 p-2.5 rounded-xl bg-background hover:bg-accent transition-colors">
+                <MessageCircle className="size-4 text-secondary" />
                 <span className="text-[10px] font-semibold">رسالة خاصة</span>
               </Link>
-              <button onClick={sendFriendRequest} className="flex flex-col items-center gap-1 p-3 rounded-xl bg-background hover:bg-accent transition-colors">
-                <UserPlus className="size-5 text-primary-glow" />
+              <button onClick={sendFriendRequest} className="flex flex-col items-center gap-1 p-2.5 rounded-xl bg-background hover:bg-accent transition-colors">
+                <UserPlus className="size-4 text-primary-glow" />
                 <span className="text-[10px] font-semibold">صداقة</span>
               </button>
             </>

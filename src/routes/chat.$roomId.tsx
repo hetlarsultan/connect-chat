@@ -111,9 +111,9 @@ function ChatRoom() {
     <AppShell hideNav>
       <div className="flex flex-col h-dvh max-w-md mx-auto">
         {/* Header */}
-        <header className="sticky top-0 z-30 bg-background/90 backdrop-blur-xl border-b border-border px-3 py-3 flex items-center gap-3">
-          <Link to="/" className="p-2 -mr-2 text-muted-foreground"><ArrowRight className="size-5" /></Link>
-          <div className="size-10 rounded-full flex items-center justify-center text-xl" style={{ backgroundColor: `${room?.color ?? "#8b5cf6"}33` }}>{room?.icon ?? "💬"}</div>
+        <header className="sticky top-0 z-30 bg-background/90 backdrop-blur-xl border-b border-border px-3 py-2.5 flex items-center gap-3">
+          <Link to="/" className="p-1.5 -mr-2 text-muted-foreground"><ArrowRight className="size-4" /></Link>
+          <div className="size-9 rounded-full flex items-center justify-center text-lg" style={{ backgroundColor: `${room?.color ?? "#8b5cf6"}33` }}>{room?.icon ?? "💬"}</div>
           <div className="flex-1 min-w-0">
             <h1 className="font-bold text-sm truncate">{room?.name ?? "..."}</h1>
             <p className="text-[10px] text-secondary">متصل الآن</p>
@@ -140,13 +140,24 @@ function ChatRoom() {
         {/* Input */}
         <form onSubmit={send} className="p-3 bg-surface border-t border-border space-y-2">
           {replyTo && (
-            <div className="flex items-center gap-2 bg-primary/10 border border-primary/30 rounded-xl px-3 py-2">
-              <CornerUpLeft className="size-4 text-primary shrink-0" />
-              <div className="flex-1 min-w-0">
-                <p className="text-[10px] font-bold text-primary">رد على {replyTo.profile?.username}</p>
-                <p className="text-xs text-muted-foreground truncate">{replyTo.content}</p>
+            <div className="flex items-stretch gap-2 bg-primary/10 border-r-4 border-primary rounded-xl overflow-hidden">
+              <div className="flex-1 min-w-0 py-2 px-3">
+                <div className="flex items-center gap-1.5">
+                  <CornerUpLeft className="size-3 text-primary shrink-0" />
+                  <p className="text-[10px] font-bold text-primary">
+                    رد على <span style={{ color: replyTo.profile?.name_color }}>{replyTo.profile?.username}</span>
+                  </p>
+                </div>
+                <p className="text-xs text-muted-foreground truncate mt-0.5">{replyTo.content}</p>
               </div>
-              <button type="button" onClick={() => setReplyTo(null)} className="text-muted-foreground p-1"><X className="size-4" /></button>
+              <button
+                type="button"
+                onClick={() => setReplyTo(null)}
+                className="px-3 flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-background/50 transition-colors"
+                aria-label="إلغاء الرد"
+              >
+                <X className="size-4" />
+              </button>
             </div>
           )}
           <div className="flex items-center gap-2 bg-background border border-border rounded-full p-1 pr-4">
@@ -159,8 +170,8 @@ function ChatRoom() {
               maxLength={500}
               className="flex-1 bg-transparent py-2 text-sm focus:outline-none"
             />
-            <button type="submit" disabled={sending || !input.trim()} className="size-10 rounded-full gradient-brand flex items-center justify-center text-white disabled:opacity-50">
-              {sending ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4 rotate-180" />}
+            <button type="submit" disabled={sending || !input.trim()} className="size-9 rounded-full gradient-brand flex items-center justify-center text-white disabled:opacity-50">
+              {sending ? <Loader2 className="size-3.5 animate-spin" /> : <Send className="size-3.5 rotate-180" />}
             </button>
           </div>
         </form>
