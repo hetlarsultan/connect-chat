@@ -39,6 +39,8 @@ export function useAuth() {
           setProfile(p);
           setLoading(false);
         });
+        // Bump last_seen so retention cleanup keeps active accounts
+        void supabase.from("profiles").update({ last_seen: new Date().toISOString(), is_online: true }).eq("id", session.user.id);
       } else {
         setLoading(false);
       }
