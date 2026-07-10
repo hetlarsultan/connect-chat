@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as RulesRouteImport } from './routes/rules'
+import { Route as NotificationsRouteImport } from './routes/notifications'
 import { Route as NewsRouteImport } from './routes/news'
 import { Route as MembersRouteImport } from './routes/members'
 import { Route as AuthRouteImport } from './routes/auth'
@@ -24,6 +25,11 @@ import { Route as ChatRoomIdRouteImport } from './routes/chat.$roomId'
 const RulesRoute = RulesRouteImport.update({
   id: '/rules',
   path: '/rules',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NotificationsRoute = NotificationsRouteImport.update({
+  id: '/notifications',
+  path: '/notifications',
   getParentRoute: () => rootRouteImport,
 } as any)
 const NewsRoute = NewsRouteImport.update({
@@ -83,6 +89,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/members': typeof MembersRoute
   '/news': typeof NewsRoute
+  '/notifications': typeof NotificationsRoute
   '/rules': typeof RulesRoute
   '/chat/$roomId': typeof ChatRoomIdRoute
   '/messages/$userId': typeof MessagesUserIdRoute
@@ -96,6 +103,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/members': typeof MembersRoute
   '/news': typeof NewsRoute
+  '/notifications': typeof NotificationsRoute
   '/rules': typeof RulesRoute
   '/chat/$roomId': typeof ChatRoomIdRoute
   '/messages/$userId': typeof MessagesUserIdRoute
@@ -110,6 +118,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/members': typeof MembersRoute
   '/news': typeof NewsRoute
+  '/notifications': typeof NotificationsRoute
   '/rules': typeof RulesRoute
   '/chat/$roomId': typeof ChatRoomIdRoute
   '/messages/$userId': typeof MessagesUserIdRoute
@@ -125,6 +134,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/members'
     | '/news'
+    | '/notifications'
     | '/rules'
     | '/chat/$roomId'
     | '/messages/$userId'
@@ -138,6 +148,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/members'
     | '/news'
+    | '/notifications'
     | '/rules'
     | '/chat/$roomId'
     | '/messages/$userId'
@@ -151,6 +162,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/members'
     | '/news'
+    | '/notifications'
     | '/rules'
     | '/chat/$roomId'
     | '/messages/$userId'
@@ -165,6 +177,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   MembersRoute: typeof MembersRoute
   NewsRoute: typeof NewsRoute
+  NotificationsRoute: typeof NotificationsRoute
   RulesRoute: typeof RulesRoute
   ChatRoomIdRoute: typeof ChatRoomIdRoute
   MessagesUserIdRoute: typeof MessagesUserIdRoute
@@ -180,6 +193,13 @@ declare module '@tanstack/react-router' {
       path: '/rules'
       fullPath: '/rules'
       preLoaderRoute: typeof RulesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/notifications': {
+      id: '/notifications'
+      path: '/notifications'
+      fullPath: '/notifications'
+      preLoaderRoute: typeof NotificationsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/news': {
@@ -261,6 +281,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   MembersRoute: MembersRoute,
   NewsRoute: NewsRoute,
+  NotificationsRoute: NotificationsRoute,
   RulesRoute: RulesRoute,
   ChatRoomIdRoute: ChatRoomIdRoute,
   MessagesUserIdRoute: MessagesUserIdRoute,
