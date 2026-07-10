@@ -77,6 +77,7 @@ function PrivateChat() {
       if (msgs) setMessages(msgs as PM[]);
       await supabase.from("private_messages").update({ read: true }).eq("sender_id", partnerId).eq("receiver_id", user.id).eq("read", false);
     })();
+    void loadFriendship();
   }, [user, partnerId]);
 
   useEffect(() => {
