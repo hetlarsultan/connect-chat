@@ -140,13 +140,24 @@ function ChatRoom() {
         {/* Input */}
         <form onSubmit={send} className="p-3 bg-surface border-t border-border space-y-2">
           {replyTo && (
-            <div className="flex items-center gap-2 bg-primary/10 border border-primary/30 rounded-xl px-3 py-2">
-              <CornerUpLeft className="size-4 text-primary shrink-0" />
-              <div className="flex-1 min-w-0">
-                <p className="text-[10px] font-bold text-primary">رد على {replyTo.profile?.username}</p>
-                <p className="text-xs text-muted-foreground truncate">{replyTo.content}</p>
+            <div className="flex items-stretch gap-2 bg-primary/10 border-r-4 border-primary rounded-xl overflow-hidden">
+              <div className="flex-1 min-w-0 py-2 px-3">
+                <div className="flex items-center gap-1.5">
+                  <CornerUpLeft className="size-3 text-primary shrink-0" />
+                  <p className="text-[10px] font-bold text-primary">
+                    رد على <span style={{ color: replyTo.profile?.name_color }}>{replyTo.profile?.username}</span>
+                  </p>
+                </div>
+                <p className="text-xs text-muted-foreground truncate mt-0.5">{replyTo.content}</p>
               </div>
-              <button type="button" onClick={() => setReplyTo(null)} className="text-muted-foreground p-1"><X className="size-4" /></button>
+              <button
+                type="button"
+                onClick={() => setReplyTo(null)}
+                className="px-3 flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-background/50 transition-colors"
+                aria-label="إلغاء الرد"
+              >
+                <X className="size-4" />
+              </button>
             </div>
           )}
           <div className="flex items-center gap-2 bg-background border border-border rounded-full p-1 pr-4">
