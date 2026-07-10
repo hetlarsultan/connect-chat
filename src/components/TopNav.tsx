@@ -7,7 +7,7 @@ export function TopNav() {
   const { unreadMessages, friendRequests } = useNotifications();
 
   const items = [
-    { to: "/", icon: Home, label: "الغرف", badge: friendRequests },
+    { to: "/", icon: Home, label: "الغرف", badge: 0 },
     { to: "/members", icon: Users, label: "المتصلون", badge: friendRequests },
     { to: "/messages", icon: Mail, label: "الرسائل", badge: unreadMessages },
     { to: "/profile", icon: User, label: "حسابي", badge: 0 },
