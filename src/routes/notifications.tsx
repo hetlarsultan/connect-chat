@@ -42,34 +42,47 @@ function NotificationsCenter() {
     if (!loading && !user) navigate({ to: "/auth" });
   }, [loading, user, navigate]);
 
-  async function refresh() {
+  async function refresh(initial = false) {
     if (!user) return;
-    const [{ data: mData }, { data: fData }] = await Promise.all([
-      supabase
-        .from("private_messages")
-        .select("id, sender_id, content, created_at")
-        .eq("receiver_id", user.id)
-        .eq("read", false)
-        .order("created_at", { ascending: false }),
-      supabase
-        .from("friendships")
-        .select("id, requester_id, created_at")
-        .eq("addressee_id", user.id)
-        .eq("status", "pending")
-        .order("created_at", { ascending: false }),
-    ]);
-    const ids = new Set<string>([
-      ...(mData ?? []).map((m) => m.sender_id),
-      ...(fData ?? []).map((f) => f.requester_id),
-    ]);
-    let profMap = new Map<string, Profile>();
-    if (ids.size) {
-      const { data: profs } = await supabase.from("profiles").select("*").in("id", [...ids]);
-      profMap = new Map((profs ?? []).map((p) => [p.id, p as Profile]));
+    if (initial) setStatus("loading");
+    try {
+      const [pmRes, frRes] = await Promise.all([
+        supabase
+          .from("private_messages")
+          .select("id, sender_id, content, created_at")
+          .eq("receiver_id", user.id)
+          .eq("read", false)
+          .order("created_at", { ascending: false }),
+        supabase
+          .from("friendships")
+          .select("id, requester_id, created_at")
+          .eq("addressee_id", user.id)
+          .eq("status", "pending")
+          .order("created_at", { ascending: false }),
+      ]);
+      if (pmRes.error) throw pmRes.error;
+      if (frRes.error) throw frRes.error;
+      const mData = pmRes.data ?? [];
+      const fData = frRes.data ?? [];
+      const ids = new Set<string>([
+        ...mData.map((m) => m.sender_id),
+        ...fData.map((f) => f.requester_id),
+      ]);
+      let profMap = new Map<string, Profile>();
+      if (ids.size) {
+        const { data: profs } = await supabase.from("profiles").select("*").in("id", [...ids]);
+        profMap = new Map((profs ?? []).map((p) => [p.id, p as Profile]));
+      }
+      setPms(mData.map((m) => ({ ...m, sender: profMap.get(m.sender_id) })));
+      setReqs(fData.map((f) => ({ ...f, requester: profMap.get(f.requester_id) })));
+      setStatus("ready");
+      setErrMsg(null);
+    } catch (e: any) {
+      setStatus("error");
+      setErrMsg(e?.message ?? "تعذر تحميل الإشعارات");
     }
-    setPms((mData ?? []).map((m) => ({ ...m, sender: profMap.get(m.sender_id) })));
-    setReqs((fData ?? []).map((f) => ({ ...f, requester: profMap.get(f.requester_id) })));
   }
+
 
   useEffect(() => {
     if (!user) return;
