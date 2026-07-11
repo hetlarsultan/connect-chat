@@ -4,8 +4,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth, type Profile } from "@/lib/use-auth";
 import { AppShell, PageHeader } from "@/components/AppShell";
 import { Avatar } from "@/components/Avatar";
-import { Check, X, MessageCircle, UserPlus, Bell } from "lucide-react";
+import { Check, X, MessageCircle, UserPlus, Bell, Loader2, AlertCircle, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
+
 
 export const Route = createFileRoute("/notifications")({
   head: () => ({ meta: [{ title: "مركز الإشعارات - شات عالمي" }] }),
