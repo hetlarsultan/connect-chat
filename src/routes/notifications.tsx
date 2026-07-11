@@ -34,6 +34,9 @@ function NotificationsCenter() {
   const [pms, setPms] = useState<UnreadPM[]>([]);
   const [reqs, setReqs] = useState<FriendReq[]>([]);
   const [busy, setBusy] = useState<string | null>(null);
+  const [status, setStatus] = useState<"idle" | "loading" | "ready" | "error">("loading");
+  const [errMsg, setErrMsg] = useState<string | null>(null);
+
 
   useEffect(() => {
     if (!loading && !user) navigate({ to: "/auth" });
