@@ -86,7 +86,7 @@ function NotificationsCenter() {
 
   useEffect(() => {
     if (!user) return;
-    void refresh();
+    void refresh(true);
     const ch = supabase
       .channel(`notif-center:${user.id}:${Math.random().toString(36).slice(2)}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "private_messages", filter: `receiver_id=eq.${user.id}` }, () => void refresh())
@@ -94,6 +94,7 @@ function NotificationsCenter() {
       .subscribe();
     return () => { supabase.removeChannel(ch); };
   }, [user]);
+
 
   async function accept(f: FriendReq) {
     setBusy(f.id);
