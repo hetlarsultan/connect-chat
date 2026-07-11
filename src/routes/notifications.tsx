@@ -4,8 +4,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth, type Profile } from "@/lib/use-auth";
 import { AppShell, PageHeader } from "@/components/AppShell";
 import { Avatar } from "@/components/Avatar";
-import { Check, X, MessageCircle, UserPlus, Bell } from "lucide-react";
+import { Check, X, MessageCircle, UserPlus, Bell, Loader2, AlertCircle, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
+
 
 export const Route = createFileRoute("/notifications")({
   head: () => ({ meta: [{ title: "مركز الإشعارات - شات عالمي" }] }),
@@ -33,43 +34,59 @@ function NotificationsCenter() {
   const [pms, setPms] = useState<UnreadPM[]>([]);
   const [reqs, setReqs] = useState<FriendReq[]>([]);
   const [busy, setBusy] = useState<string | null>(null);
+  const [status, setStatus] = useState<"idle" | "loading" | "ready" | "error">("loading");
+  const [errMsg, setErrMsg] = useState<string | null>(null);
+
 
   useEffect(() => {
     if (!loading && !user) navigate({ to: "/auth" });
   }, [loading, user, navigate]);
 
-  async function refresh() {
+  async function refresh(initial = false) {
     if (!user) return;
-    const [{ data: mData }, { data: fData }] = await Promise.all([
-      supabase
-        .from("private_messages")
-        .select("id, sender_id, content, created_at")
-        .eq("receiver_id", user.id)
-        .eq("read", false)
-        .order("created_at", { ascending: false }),
-      supabase
-        .from("friendships")
-        .select("id, requester_id, created_at")
-        .eq("addressee_id", user.id)
-        .eq("status", "pending")
-        .order("created_at", { ascending: false }),
-    ]);
-    const ids = new Set<string>([
-      ...(mData ?? []).map((m) => m.sender_id),
-      ...(fData ?? []).map((f) => f.requester_id),
-    ]);
-    let profMap = new Map<string, Profile>();
-    if (ids.size) {
-      const { data: profs } = await supabase.from("profiles").select("*").in("id", [...ids]);
-      profMap = new Map((profs ?? []).map((p) => [p.id, p as Profile]));
+    if (initial) setStatus("loading");
+    try {
+      const [pmRes, frRes] = await Promise.all([
+        supabase
+          .from("private_messages")
+          .select("id, sender_id, content, created_at")
+          .eq("receiver_id", user.id)
+          .eq("read", false)
+          .order("created_at", { ascending: false }),
+        supabase
+          .from("friendships")
+          .select("id, requester_id, created_at")
+          .eq("addressee_id", user.id)
+          .eq("status", "pending")
+          .order("created_at", { ascending: false }),
+      ]);
+      if (pmRes.error) throw pmRes.error;
+      if (frRes.error) throw frRes.error;
+      const mData = pmRes.data ?? [];
+      const fData = frRes.data ?? [];
+      const ids = new Set<string>([
+        ...mData.map((m) => m.sender_id),
+        ...fData.map((f) => f.requester_id),
+      ]);
+      let profMap = new Map<string, Profile>();
+      if (ids.size) {
+        const { data: profs } = await supabase.from("profiles").select("*").in("id", [...ids]);
+        profMap = new Map((profs ?? []).map((p) => [p.id, p as Profile]));
+      }
+      setPms(mData.map((m) => ({ ...m, sender: profMap.get(m.sender_id) })));
+      setReqs(fData.map((f) => ({ ...f, requester: profMap.get(f.requester_id) })));
+      setStatus("ready");
+      setErrMsg(null);
+    } catch (e: any) {
+      setStatus("error");
+      setErrMsg(e?.message ?? "تعذر تحميل الإشعارات");
     }
-    setPms((mData ?? []).map((m) => ({ ...m, sender: profMap.get(m.sender_id) })));
-    setReqs((fData ?? []).map((f) => ({ ...f, requester: profMap.get(f.requester_id) })));
   }
+
 
   useEffect(() => {
     if (!user) return;
-    void refresh();
+    void refresh(true);
     const ch = supabase
       .channel(`notif-center:${user.id}:${Math.random().toString(36).slice(2)}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "private_messages", filter: `receiver_id=eq.${user.id}` }, () => void refresh())
@@ -77,6 +94,7 @@ function NotificationsCenter() {
       .subscribe();
     return () => { supabase.removeChannel(ch); };
   }, [user]);
+
 
   async function accept(f: FriendReq) {
     setBusy(f.id);
@@ -97,18 +115,66 @@ function NotificationsCenter() {
   }
 
   const total = pms.length + reqs.length;
+  const isLoading = status === "loading";
+  const isError = status === "error";
+  const isEmpty = status === "ready" && total === 0;
+
+  const subtitle = isLoading
+    ? "جاري التحميل..."
+    : isError
+    ? "تعذر التحميل"
+    : total
+    ? `${total} عنصر جديد`
+    : "لا يوجد جديد";
 
   return (
     <AppShell>
-      <PageHeader title="مركز الإشعارات" subtitle={total ? `${total} عنصر جديد` : "لا يوجد جديد"} />
+      <PageHeader title="مركز الإشعارات" subtitle={subtitle} />
 
       <div className="p-4 space-y-6">
-        {total === 0 && (
-          <div className="text-center py-16 text-muted-foreground">
-            <Bell className="size-10 mx-auto mb-3 opacity-40" />
-            <p className="text-sm">لا توجد إشعارات جديدة ✨</p>
+        {isLoading && (
+          <div className="space-y-3" aria-busy="true" aria-live="polite">
+            <div className="flex items-center justify-center gap-2 py-6 text-muted-foreground">
+              <Loader2 className="size-4 animate-spin" />
+              <span className="text-xs">جاري تحميل الإشعارات...</span>
+            </div>
+            {[0, 1, 2].map((i) => (
+              <div key={i} className="flex items-center gap-3 p-3 rounded-2xl bg-surface border border-border animate-pulse">
+                <div className="size-10 rounded-full bg-muted/40" />
+                <div className="flex-1 space-y-2">
+                  <div className="h-3 w-24 rounded bg-muted/40" />
+                  <div className="h-2.5 w-40 rounded bg-muted/30" />
+                </div>
+              </div>
+            ))}
           </div>
         )}
+
+        {isError && (
+          <div className="text-center py-12 px-4 rounded-2xl bg-surface border border-red-500/30">
+            <AlertCircle className="size-10 mx-auto mb-3 text-red-500" />
+            <p className="text-sm font-bold mb-1">تعذر تحميل الإشعارات</p>
+            <p className="text-[11px] text-muted-foreground mb-4">{errMsg}</p>
+            <button
+              onClick={() => void refresh(true)}
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-primary text-primary-foreground text-xs font-bold"
+            >
+              <RefreshCw className="size-3.5" /> إعادة المحاولة
+            </button>
+          </div>
+        )}
+
+        {isEmpty && (
+          <div className="text-center py-16 text-muted-foreground">
+            <div className="relative inline-block mb-3">
+              <Bell className="size-12 mx-auto opacity-40" />
+              <span className="absolute -top-1 -right-1 size-3 rounded-full bg-primary/40" />
+            </div>
+            <p className="text-sm font-bold text-foreground">لا توجد إشعارات جديدة</p>
+            <p className="text-[11px] mt-1">سنعلمك فور وصول رسالة أو طلب صداقة ✨</p>
+          </div>
+        )}
+
 
         {reqs.length > 0 && (
           <section className="space-y-2">
