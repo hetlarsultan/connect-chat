@@ -71,7 +71,7 @@ function NotificationsCenter() {
     if (!user) return;
     void refresh();
     const ch = supabase
-      .channel(`notif-center:${user.id}`)
+      .channel(`notif-center:${user.id}:${Math.random().toString(36).slice(2)}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "private_messages", filter: `receiver_id=eq.${user.id}` }, () => void refresh())
       .on("postgres_changes", { event: "*", schema: "public", table: "friendships", filter: `addressee_id=eq.${user.id}` }, () => void refresh())
       .subscribe();
