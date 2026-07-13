@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { BottomNav } from "./BottomNav";
 import { TopNav } from "./TopNav";
+import { GuestUpgradeBadge } from "./GuestUpgradeBadge";
 
 export function AppShell({ children, hideNav = false }: { children: ReactNode; hideNav?: boolean }) {
   return (
@@ -8,6 +9,7 @@ export function AppShell({ children, hideNav = false }: { children: ReactNode; h
       {!hideNav && <TopNav />}
       <div className={hideNav ? "" : "pb-24"}>{children}</div>
       {!hideNav && <BottomNav />}
+      {!hideNav && <GuestUpgradeBadge />}
     </div>
   );
 }
