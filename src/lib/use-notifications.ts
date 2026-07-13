@@ -46,7 +46,8 @@ export function useNotifications() {
     }
 
     void refresh();
-    const interval = setInterval(refresh, 15000);
+
+
 
     const ch = supabase
       .channel(`notif:${user.id}:${Math.random().toString(36).slice(2)}`)
