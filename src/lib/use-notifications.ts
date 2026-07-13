@@ -57,10 +57,10 @@ export function useNotifications() {
 
     return () => {
       cancelled = true;
-      clearInterval(interval);
       supabase.removeChannel(ch);
     };
   }, [user]);
+
 
   return counts;
 }
