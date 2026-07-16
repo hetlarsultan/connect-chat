@@ -61,8 +61,11 @@ function AuthPage() {
 
   async function handleSignup(e: React.FormEvent) {
     e.preventDefault();
-    if (!username.trim() || !age || !email || password.length < 6) {
-      return toast.error("املأ جميع الحقول (كلمة المرور 6 أحرف على الأقل)");
+    if (!username.trim() || !age || password.length < 6) {
+      return toast.error("املأ الحقول المطلوبة (كلمة المرور 6 أحرف على الأقل)");
+    }
+    if (email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      return toast.error("بريد إلكتروني غير صالح");
     }
     setLoading(true);
     try {
@@ -72,13 +75,26 @@ function AuthPage() {
         toast.error("اسم المستخدم محجوز");
         return;
       }
-      const { data, error } = await supabase.auth.signUp({
-        email, password,
-        options: { emailRedirectTo: window.location.origin },
-      });
-      if (error) throw error;
-      if (data.user) {
-        await ensureProfile(data.user.id, false);
+      let userId: string | undefined;
+      if (email.trim()) {
+        const { data, error } = await supabase.auth.signUp({
+          email: email.trim(), password,
+          options: { emailRedirectTo: window.location.origin },
+        });
+        if (error) throw error;
+        userId = data.user?.id;
+      } else {
+        // No email: create anonymous account and set password so the user can log back in via username-less flow later
+        const { data, error } = await supabase.auth.signInAnonymously();
+        if (error) throw error;
+        userId = data.user?.id;
+        if (userId) {
+          const { error: pwErr } = await supabase.auth.updateUser({ password });
+          if (pwErr) throw pwErr;
+        }
+      }
+      if (userId) {
+        await ensureProfile(userId, false);
         toast.success("تم إنشاء الحساب بنجاح!");
         navigate({ to: "/" });
       }
