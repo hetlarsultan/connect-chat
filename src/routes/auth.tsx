@@ -167,7 +167,7 @@ function AuthPage() {
                   <Input type="number" placeholder="العمر" value={age} onChange={setAge} className="w-1/3" />
                   <Select value={gender} onChange={(v: string) => setGender(v as "male" | "female")} className="w-2/3" />
                 </div>
-                <Input type="email" placeholder="البريد الإلكتروني" value={email} onChange={setEmail} />
+                <Input type="email" placeholder="البريد الإلكتروني (اختياري)" value={email} onChange={setEmail} />
                 <Input type="password" placeholder="كلمة المرور (6+ أحرف)" value={password} onChange={setPassword} />
                 <Submit loading={loading}>إنشاء حساب جديد</Submit>
               </form>
