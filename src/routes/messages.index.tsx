@@ -26,10 +26,10 @@ function MessagesList() {
     void (async () => {
       const { data } = await supabase
         .from("private_messages")
-        .select("*")
+        .select("sender_id,receiver_id,content,created_at,read")
         .or(`sender_id.eq.${user.id},receiver_id.eq.${user.id}`)
         .order("created_at", { ascending: false })
-        .limit(200);
+        .limit(100);
       if (!data) return;
       const partnerMap = new Map<string, Conv>();
       for (const m of data) {
@@ -48,7 +48,10 @@ function MessagesList() {
       }
       const ids = [...partnerMap.keys()];
       if (ids.length) {
-        const { data: profs } = await supabase.from("profiles").select("*").in("id", ids);
+        const { data: profs } = await supabase
+          .from("profiles")
+          .select("id,username,avatar_url,name_color,text_color,is_guest")
+          .in("id", ids);
         for (const p of profs ?? []) {
           if (partnerMap.has(p.id)) partnerMap.get(p.id)!.partner = p as Profile;
         }

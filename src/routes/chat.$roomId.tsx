@@ -35,6 +35,7 @@ function ChatRoom() {
   const [replyTo, setReplyTo] = useState<Msg | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const profileCache = useRef<Map<string, Profile>>(new Map());
 
   useEffect(() => {
     if (!loading && !user) navigate({ to: "/auth" });
@@ -42,19 +43,25 @@ function ChatRoom() {
 
   useEffect(() => {
     void (async () => {
-      const { data: r } = await supabase.from("rooms").select("name,icon,color").eq("id", roomId).maybeSingle();
+      const [{ data: r }, { data: msgs }] = await Promise.all([
+        supabase.from("rooms").select("name,icon,color").eq("id", roomId).maybeSingle(),
+        supabase
+          .from("messages")
+          .select("id, content, user_id, created_at, reply_to_id, reply_snippet, reply_username")
+          .eq("room_id", roomId)
+          .order("created_at", { ascending: false })
+          .limit(50),
+      ]);
       setRoom(r);
-      const { data: msgs } = await supabase
-        .from("messages")
-        .select("id, content, user_id, created_at, reply_to_id, reply_snippet, reply_username")
-        .eq("room_id", roomId)
-        .order("created_at", { ascending: true })
-        .limit(100);
       if (msgs) {
-        const userIds = [...new Set(msgs.map((m) => m.user_id))];
-        const { data: profs } = await supabase.from("profiles").select("*").in("id", userIds);
-        const map = new Map((profs ?? []).map((p) => [p.id, p as Profile]));
-        setMessages(msgs.map((m) => ({ ...m, profile: map.get(m.user_id) })));
+        const ordered = msgs.reverse();
+        const userIds = [...new Set(ordered.map((m) => m.user_id))];
+        const { data: profs } = await supabase
+          .from("profiles")
+          .select("id,username,avatar_url,name_color,text_color,is_guest,gender,age")
+          .in("id", userIds);
+        for (const p of profs ?? []) profileCache.current.set(p.id, p as Profile);
+        setMessages(ordered.map((m) => ({ ...m, profile: profileCache.current.get(m.user_id) })));
       }
     })();
   }, [roomId]);
@@ -64,8 +71,19 @@ function ChatRoom() {
       .channel(`room:${roomId}`)
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "messages", filter: `room_id=eq.${roomId}` }, async (payload) => {
         const m = payload.new as any;
-        const { data: p } = await supabase.from("profiles").select("*").eq("id", m.user_id).maybeSingle();
-        setMessages((prev) => [...prev, { ...m, profile: p as Profile }]);
+        let p = profileCache.current.get(m.user_id);
+        if (!p) {
+          const { data } = await supabase
+            .from("profiles")
+            .select("id,username,avatar_url,name_color,text_color,is_guest,gender,age")
+            .eq("id", m.user_id)
+            .maybeSingle();
+          if (data) {
+            p = data as Profile;
+            profileCache.current.set(m.user_id, p);
+          }
+        }
+        setMessages((prev) => [...prev, { ...m, profile: p }]);
       })
       .subscribe();
     return () => { supabase.removeChannel(channel); };

@@ -22,7 +22,7 @@ export function useNotifications() {
 
     async function refresh() {
       if (!user) return;
-      const [pm, fr, rooms] = await Promise.all([
+      const [pm, fr] = await Promise.all([
         supabase
           .from("private_messages")
           .select("id", { count: "exact", head: true })
@@ -33,24 +33,19 @@ export function useNotifications() {
           .select("id", { count: "exact", head: true })
           .eq("addressee_id", user.id)
           .eq("status", "pending"),
-        supabase
-          .from("rooms")
-          .select("id", { count: "exact", head: true }),
       ]);
       if (cancelled) return;
-      setCounts({
+      setCounts((prev) => ({
+        ...prev,
         unreadMessages: pm.count ?? 0,
         friendRequests: fr.count ?? 0,
-        activeRooms: rooms.count ?? 0,
-      });
+      }));
     }
 
     void refresh();
 
-
-
     const ch = supabase
-      .channel(`notif:${user.id}:${Math.random().toString(36).slice(2)}`)
+      .channel(`notif:${user.id}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "private_messages", filter: `receiver_id=eq.${user.id}` }, () => void refresh())
       .on("postgres_changes", { event: "*", schema: "public", table: "friendships", filter: `addressee_id=eq.${user.id}` }, () => void refresh())
       .subscribe();
