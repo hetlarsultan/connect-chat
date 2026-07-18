@@ -14,6 +14,30 @@ export type Database = {
   }
   public: {
     Tables: {
+      cleanup_logs: {
+        Row: {
+          created_at: string
+          deleted_count: number
+          details: Json | null
+          id: string
+          task: string
+        }
+        Insert: {
+          created_at?: string
+          deleted_count?: number
+          details?: Json | null
+          id?: string
+          task: string
+        }
+        Update: {
+          created_at?: string
+          deleted_count?: number
+          details?: Json | null
+          id?: string
+          task?: string
+        }
+        Relationships: []
+      }
       friendships: {
         Row: {
           addressee_id: string
