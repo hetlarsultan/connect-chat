@@ -28,7 +28,11 @@ function MembersPage() {
 
   useEffect(() => {
     void (async () => {
-      const { data } = await supabase.from("profiles").select("*").order("last_seen", { ascending: false }).limit(200);
+      const { data } = await supabase
+        .from("profiles")
+        .select("id,username,avatar_url,name_color,text_color,is_guest,gender,age,is_online,last_seen")
+        .order("last_seen", { ascending: false })
+        .limit(120);
       if (data) setProfiles(data as Profile[]);
     })();
   }, []);
