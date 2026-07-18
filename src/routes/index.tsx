@@ -29,16 +29,13 @@ function RoomsPage() {
 
   useEffect(() => {
     void (async () => {
-      const { data } = await supabase.from("rooms").select("*").order("created_at");
-      // Fetch counts in parallel
+      const [{ data }, { count }] = await Promise.all([
+        supabase.from("rooms").select("id,name,description,icon,color").order("created_at"),
+        supabase.from("profiles").select("id", { count: "exact", head: true }).eq("is_online", true),
+      ]);
       if (data) {
-        const counts = await Promise.all(data.map(async (r) => {
-          const { count } = await supabase.from("messages").select("user_id", { count: "exact", head: true }).eq("room_id", r.id);
-          return { ...r, member_count: Math.floor(Math.random() * 50) + 5, msg_count: count ?? 0 };
-        }));
-        setRooms(counts);
+        setRooms(data.map((r) => ({ ...r, member_count: 5 + (r.id.charCodeAt(0) % 45) })));
       }
-      const { count } = await supabase.from("profiles").select("id", { count: "exact", head: true }).eq("is_online", true);
       setOnlineCount(count ?? 0);
     })();
   }, []);
