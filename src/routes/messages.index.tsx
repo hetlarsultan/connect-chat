@@ -4,6 +4,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth, type Profile } from "@/lib/use-auth";
 import { AppShell, PageHeader } from "@/components/AppShell";
 import { Avatar } from "@/components/Avatar";
+import { PrivateLockGate, LockSettingsDialog } from "@/components/PrivateLockGate";
+import { isLockEnabled } from "@/lib/private-lock";
+import { Lock, LockOpen } from "lucide-react";
 
 export const Route = createFileRoute("/messages/")({
   head: () => ({ meta: [{ title: "الرسائل الخاصة - شات عالمي" }] }),
@@ -16,6 +19,12 @@ function MessagesList() {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
   const [convs, setConvs] = useState<Conv[]>([]);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [enabled, setEnabled] = useState(false);
+
+  useEffect(() => {
+    if (user) setEnabled(isLockEnabled(user.id));
+  }, [user, settingsOpen]);
 
   useEffect(() => {
     if (!loading && !user) navigate({ to: "/auth" });
