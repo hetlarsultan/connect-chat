@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { detectAndSaveCountry } from "./geolocation";
 import type { User } from "@supabase/supabase-js";
 
 export type Profile = {
@@ -15,6 +16,8 @@ export type Profile = {
   is_online: boolean;
   last_seen: string;
   created_at: string;
+  country: string | null;
+  country_code: string | null;
 };
 
 export function useAuth() {
@@ -41,6 +44,8 @@ export function useAuth() {
         });
         // Bump last_seen so retention cleanup keeps active accounts
         void supabase.from("profiles").update({ last_seen: new Date().toISOString(), is_online: true }).eq("id", session.user.id);
+        // Detect country (cached, updates weekly)
+        void detectAndSaveCountry(session.user.id);
       } else {
         setLoading(false);
       }
