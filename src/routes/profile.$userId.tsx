@@ -6,6 +6,7 @@ import { AppShell } from "@/components/AppShell";
 import { Avatar } from "@/components/Avatar";
 import { ArrowRight, MessageCircle, UserPlus, Check, X, UserCheck, Clock } from "lucide-react";
 import { toast } from "sonner";
+import { countryFlag } from "@/lib/geolocation";
 
 export const Route = createFileRoute("/profile/$userId")({
   component: UserProfilePage,
@@ -87,6 +88,12 @@ function UserProfilePage() {
         <Avatar profile={p} size="xl" ring={false} />
         <h2 className="text-2xl font-bold" style={{ color: p.name_color }}>{p.username}</h2>
         <p className="text-sm text-muted-foreground">{p.gender === "female" ? "أنثى" : "ذكر"} {p.age && `• ${p.age} سنة`} {p.is_guest && "• زائر"}</p>
+        {p.country && (
+          <p className="text-sm text-foreground flex items-center gap-1.5">
+            <span className="text-lg">{countryFlag(p.country_code)}</span>
+            <span>{p.country}</span>
+          </p>
+        )}
         {p.bio && <p className="text-sm text-foreground italic text-center max-w-sm">"{p.bio}"</p>}
         <p className="text-[10px] text-muted-foreground font-mono">ID: {p.id.slice(0, 8)}</p>
       </div>

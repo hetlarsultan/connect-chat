@@ -7,6 +7,7 @@ import { Avatar } from "@/components/Avatar";
 import { LogOut, Save, Loader2, Camera } from "lucide-react";
 import { toast } from "sonner";
 import { uploadAvatar } from "@/lib/storage";
+import { countryFlag } from "@/lib/geolocation";
 
 export const Route = createFileRoute("/profile/")({
   head: () => ({ meta: [{ title: "ملفي الشخصي - شات عالمي" }] }),
@@ -111,6 +112,12 @@ function ProfilePage() {
         </div>
         <h2 className="text-xl font-bold" style={{ color: nameColor }}>{username}</h2>
         <p className="text-xs text-muted-foreground">{profile.gender === "female" ? "أنثى" : "ذكر"} {age && `• ${age} سنة`} {profile.is_guest && "• زائر"}</p>
+        {profile.country && (
+          <p className="text-xs text-foreground flex items-center gap-1.5">
+            <span className="text-base">{countryFlag(profile.country_code)}</span>
+            <span>{profile.country}</span>
+          </p>
+        )}
         <p className="text-[10px] text-muted-foreground font-mono">ID: {profile.id.slice(0, 8)}</p>
       </div>
 
