@@ -68,6 +68,14 @@ function PrivateChat() {
 
   useEffect(() => {
     if (!loading && !user) navigate({ to: "/auth" });
+    if (user) {
+      // if locked & not unlocked in this session, redirect to gate
+      import("@/lib/private-lock").then(({ isLockEnabled, isUnlocked }) => {
+        if (isLockEnabled(user.id) && !isUnlocked(user.id)) {
+          navigate({ to: "/messages" });
+        }
+      });
+    }
   }, [loading, user, navigate]);
 
   useEffect(() => {
