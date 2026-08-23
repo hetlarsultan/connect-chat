@@ -7,6 +7,7 @@ import { Avatar } from "@/components/Avatar";
 import { UserActionsDialog } from "@/components/UserActions";
 import { ArrowRight, Send, Loader2, X, CornerUpLeft } from "lucide-react";
 import { toast } from "sonner";
+import { getCached, setCached } from "@/lib/cache";
 
 export const Route = createFileRoute("/chat/$roomId")({
   component: ChatRoom,
@@ -42,6 +43,13 @@ function ChatRoom() {
   }, [loading, user, navigate]);
 
   useEffect(() => {
+    // Instant paint from cache when re-entering a room, then refresh.
+    const cached = getCached<{ room: typeof room; messages: Msg[] }>(`room:${roomId}`, 60_000);
+    if (cached) {
+      setRoom(cached.room);
+      setMessages(cached.messages);
+      for (const m of cached.messages) if (m.profile) profileCache.current.set(m.user_id, m.profile);
+    }
     void (async () => {
       const [{ data: r }, { data: msgs }] = await Promise.all([
         supabase.from("rooms").select("name,icon,color").eq("id", roomId).maybeSingle(),
@@ -55,13 +63,17 @@ function ChatRoom() {
       setRoom(r);
       if (msgs) {
         const ordered = msgs.reverse();
-        const userIds = [...new Set(ordered.map((m) => m.user_id))];
-        const { data: profs } = await supabase
-          .from("profiles")
-          .select("id,username,avatar_url,name_color,text_color,is_guest,gender,age")
-          .in("id", userIds);
-        for (const p of profs ?? []) profileCache.current.set(p.id, p as Profile);
-        setMessages(ordered.map((m) => ({ ...m, profile: profileCache.current.get(m.user_id) })));
+        const missing = [...new Set(ordered.map((m) => m.user_id))].filter((id) => !profileCache.current.has(id));
+        if (missing.length) {
+          const { data: profs } = await supabase
+            .from("profiles")
+            .select("id,username,avatar_url,name_color,text_color,is_guest,gender,age")
+            .in("id", missing);
+          for (const p of profs ?? []) profileCache.current.set(p.id, p as Profile);
+        }
+        const withProfiles = ordered.map((m) => ({ ...m, profile: profileCache.current.get(m.user_id) }));
+        setMessages(withProfiles);
+        setCached(`room:${roomId}`, { room: r, messages: withProfiles });
       }
     })();
   }, [roomId]);

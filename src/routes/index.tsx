@@ -4,6 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/use-auth";
 import { AppShell, PageHeader } from "@/components/AppShell";
 import { ChevronLeft, Users } from "lucide-react";
+import { swr } from "@/lib/cache";
+
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -28,21 +30,31 @@ function RoomsPage() {
   }, [loading, user, navigate]);
 
   useEffect(() => {
-    void (async () => {
-      const [{ data }, { count }] = await Promise.all([
-        supabase.from("rooms").select("id,name,description,icon,color").order("created_at"),
-        supabase.from("profiles").select("id", { count: "exact", head: true }).eq("is_online", true),
-      ]);
-      if (data) {
-        setRooms(data.map((r) => ({ ...r, member_count: 5 + (r.id.charCodeAt(0) % 45) })));
-      }
-      setOnlineCount(count ?? 0);
-    })();
+    void swr<{ rooms: Room[]; online: number }>(
+      "home:rooms",
+      60_000,
+      async () => {
+        const [{ data }, { count }] = await Promise.all([
+          supabase.from("rooms").select("id,name,description,icon,color").order("created_at"),
+          supabase.from("profiles").select("id", { count: "exact", head: true }).eq("is_online", true),
+        ]);
+        return {
+          rooms: (data ?? []).map((r) => ({ ...r, member_count: 5 + (r.id.charCodeAt(0) % 45) })),
+          online: count ?? 0,
+        };
+      },
+      ({ rooms: r, online }) => {
+        setRooms(r);
+        setOnlineCount(online);
+      },
+    );
   }, []);
 
-  if (loading || !profile) {
+  if (loading && !profile) {
     return <div className="min-h-dvh flex items-center justify-center text-muted-foreground">جاري التحميل...</div>;
   }
+  if (!profile) return null;
+
 
   return (
     <AppShell>

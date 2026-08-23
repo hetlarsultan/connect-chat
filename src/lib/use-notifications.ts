@@ -8,53 +8,87 @@ export type NotificationCounts = {
   activeRooms: number;
 };
 
+/* Shared singleton: one realtime channel + one count query for the whole
+ * app, no matter how many navbars/badges call the hook. */
+
+let counts: NotificationCounts = { unreadMessages: 0, friendRequests: 0, activeRooms: 0 };
+const listeners = new Set<(c: NotificationCounts) => void>();
+let channel: ReturnType<typeof supabase.channel> | null = null;
+let boundUserId: string | null = null;
+let inFlight: Promise<void> | null = null;
+let lastFetch = 0;
+
+function emit(next: NotificationCounts) {
+  if (
+    next.unreadMessages === counts.unreadMessages &&
+    next.friendRequests === counts.friendRequests &&
+    next.activeRooms === counts.activeRooms
+  )
+    return;
+  counts = next;
+  for (const l of listeners) l(counts);
+}
+
+async function refresh(userId: string, force = false) {
+  if (!force && Date.now() - lastFetch < 4000) return;
+  if (inFlight) return inFlight;
+  lastFetch = Date.now();
+  inFlight = (async () => {
+    const [pm, fr] = await Promise.all([
+      supabase
+        .from("private_messages")
+        .select("id", { count: "exact", head: true })
+        .eq("receiver_id", userId)
+        .eq("read", false),
+      supabase
+        .from("friendships")
+        .select("id", { count: "exact", head: true })
+        .eq("addressee_id", userId)
+        .eq("status", "pending"),
+    ]);
+    emit({ ...counts, unreadMessages: pm.count ?? 0, friendRequests: fr.count ?? 0 });
+  })().finally(() => {
+    inFlight = null;
+  });
+  return inFlight;
+}
+
+function bind(userId: string) {
+  if (boundUserId === userId && channel) return;
+  if (channel) {
+    supabase.removeChannel(channel);
+    channel = null;
+  }
+  boundUserId = userId;
+  void refresh(userId, true);
+
+  const ch = supabase.channel(`notif:${userId}`);
+  ch.on(
+    "postgres_changes",
+    { event: "*", schema: "public", table: "private_messages", filter: `receiver_id=eq.${userId}` },
+    () => void refresh(userId),
+  );
+  ch.on(
+    "postgres_changes",
+    { event: "*", schema: "public", table: "friendships", filter: `addressee_id=eq.${userId}` },
+    () => void refresh(userId),
+  );
+  ch.subscribe();
+  channel = ch;
+}
+
 export function useNotifications() {
   const { user } = useAuth();
-  const [counts, setCounts] = useState<NotificationCounts>({
-    unreadMessages: 0,
-    friendRequests: 0,
-    activeRooms: 0,
-  });
+  const [snap, setSnap] = useState<NotificationCounts>(counts);
 
   useEffect(() => {
-    if (!user) return;
-    let cancelled = false;
-
-    async function refresh() {
-      if (!user) return;
-      const [pm, fr] = await Promise.all([
-        supabase
-          .from("private_messages")
-          .select("id", { count: "exact", head: true })
-          .eq("receiver_id", user.id)
-          .eq("read", false),
-        supabase
-          .from("friendships")
-          .select("id", { count: "exact", head: true })
-          .eq("addressee_id", user.id)
-          .eq("status", "pending"),
-      ]);
-      if (cancelled) return;
-      setCounts((prev) => ({
-        ...prev,
-        unreadMessages: pm.count ?? 0,
-        friendRequests: fr.count ?? 0,
-      }));
-    }
-
-    void refresh();
-
-    const ch = supabase.channel(`notif:${user.id}:${Math.random().toString(36).slice(2, 8)}`);
-    ch.on("postgres_changes", { event: "*", schema: "public", table: "private_messages", filter: `receiver_id=eq.${user.id}` }, () => void refresh());
-    ch.on("postgres_changes", { event: "*", schema: "public", table: "friendships", filter: `addressee_id=eq.${user.id}` }, () => void refresh());
-    ch.subscribe();
-
+    listeners.add(setSnap);
+    setSnap(counts);
+    if (user) bind(user.id);
     return () => {
-      cancelled = true;
-      supabase.removeChannel(ch);
+      listeners.delete(setSnap);
     };
   }, [user]);
 
-
-  return counts;
+  return snap;
 }

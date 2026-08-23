@@ -1,11 +1,13 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth, type Profile } from "@/lib/use-auth";
 import { AppShell, PageHeader } from "@/components/AppShell";
 import { Avatar } from "@/components/Avatar";
 import { UserActionsDialog } from "@/components/UserActions";
 import { Search } from "lucide-react";
+import { swr } from "@/lib/cache";
+
 
 export const Route = createFileRoute("/members")({
   head: () => ({ meta: [{ title: "المتصلون - شات عالمي" }] }),
@@ -27,24 +29,30 @@ function MembersPage() {
   }, [loading, user, navigate]);
 
   useEffect(() => {
-    void (async () => {
-      const { data } = await supabase
-        .from("profiles")
-        .select("id,username,avatar_url,name_color,text_color,is_guest,gender,age,is_online,last_seen")
-        .order("last_seen", { ascending: false })
-        .limit(120);
-      if (data) setProfiles(data as Profile[]);
-    })();
+    void swr<Profile[]>(
+      "members:list",
+      30_000,
+      async () => {
+        const { data } = await supabase
+          .from("profiles")
+          .select("id,username,avatar_url,name_color,text_color,is_guest,gender,age,is_online,last_seen")
+          .order("last_seen", { ascending: false })
+          .limit(120);
+        return (data ?? []) as Profile[];
+      },
+      setProfiles,
+    );
   }, []);
 
-  const filtered = profiles.filter((p) => {
+
+  const filtered = useMemo(() => profiles.filter((p) => {
     if (query && !p.username.toLowerCase().includes(query.toLowerCase())) return false;
     if (filter === "male" && p.gender !== "male") return false;
     if (filter === "female" && p.gender !== "female") return false;
     if (filter === "guest" && !p.is_guest) return false;
     if (filter === "member" && p.is_guest) return false;
     return true;
-  });
+  }), [profiles, query, filter]);
 
   return (
     <AppShell>
