@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth, type Profile } from "@/lib/use-auth";
 import { AppShell, PageHeader } from "@/components/AppShell";
@@ -45,14 +45,14 @@ function MembersPage() {
   }, []);
 
 
-  const filtered = profiles.filter((p) => {
+  const filtered = useMemo(() => profiles.filter((p) => {
     if (query && !p.username.toLowerCase().includes(query.toLowerCase())) return false;
     if (filter === "male" && p.gender !== "male") return false;
     if (filter === "female" && p.gender !== "female") return false;
     if (filter === "guest" && !p.is_guest) return false;
     if (filter === "member" && p.is_guest) return false;
     return true;
-  });
+  }), [profiles, query, filter]);
 
   return (
     <AppShell>
