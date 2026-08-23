@@ -27,15 +27,21 @@ function MembersPage() {
   }, [loading, user, navigate]);
 
   useEffect(() => {
-    void (async () => {
-      const { data } = await supabase
-        .from("profiles")
-        .select("id,username,avatar_url,name_color,text_color,is_guest,gender,age,is_online,last_seen")
-        .order("last_seen", { ascending: false })
-        .limit(120);
-      if (data) setProfiles(data as Profile[]);
-    })();
+    void swr<Profile[]>(
+      "members:list",
+      30_000,
+      async () => {
+        const { data } = await supabase
+          .from("profiles")
+          .select("id,username,avatar_url,name_color,text_color,is_guest,gender,age,is_online,last_seen")
+          .order("last_seen", { ascending: false })
+          .limit(120);
+        return (data ?? []) as Profile[];
+      },
+      setProfiles,
+    );
   }, []);
+
 
   const filtered = profiles.filter((p) => {
     if (query && !p.username.toLowerCase().includes(query.toLowerCase())) return false;
