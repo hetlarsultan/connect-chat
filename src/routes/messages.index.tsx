@@ -7,6 +7,7 @@ import { Avatar } from "@/components/Avatar";
 import { PrivateLockGate, LockSettingsDialog } from "@/components/PrivateLockGate";
 import { isLockEnabled } from "@/lib/private-lock";
 import { Lock, LockOpen } from "lucide-react";
+import { swr } from "@/lib/cache";
 
 export const Route = createFileRoute("/messages/")({
   head: () => ({ meta: [{ title: "الرسائل الخاصة - شات عالمي" }] }),
@@ -32,41 +33,45 @@ function MessagesList() {
 
   useEffect(() => {
     if (!user) return;
-    void (async () => {
-      const { data } = await supabase
-        .from("private_messages")
-        .select("sender_id,receiver_id,content,created_at,read")
-        .or(`sender_id.eq.${user.id},receiver_id.eq.${user.id}`)
-        .order("created_at", { ascending: false })
-        .limit(100);
-      if (!data) return;
-      const partnerMap = new Map<string, Conv>();
-      for (const m of data) {
-        const partnerId = m.sender_id === user.id ? m.receiver_id : m.sender_id;
-        if (!partnerMap.has(partnerId)) {
-          partnerMap.set(partnerId, {
-            partner: { id: partnerId } as Profile,
-            lastMessage: m.content,
-            lastAt: m.created_at,
-            unread: 0,
-          });
+    const uid = user.id;
+    void swr<Conv[]>(
+      `convs:${uid}`,
+      20_000,
+      async () => {
+        const { data } = await supabase
+          .from("private_messages")
+          .select("sender_id,receiver_id,content,created_at,read")
+          .or(`sender_id.eq.${uid},receiver_id.eq.${uid}`)
+          .order("created_at", { ascending: false })
+          .limit(100);
+        if (!data) return [];
+        const partnerMap = new Map<string, Conv>();
+        for (const m of data) {
+          const partnerId = m.sender_id === uid ? m.receiver_id : m.sender_id;
+          if (!partnerMap.has(partnerId)) {
+            partnerMap.set(partnerId, {
+              partner: { id: partnerId } as Profile,
+              lastMessage: m.content,
+              lastAt: m.created_at,
+              unread: 0,
+            });
+          }
+          if (m.receiver_id === uid && !m.read) partnerMap.get(partnerId)!.unread++;
         }
-        if (m.receiver_id === user.id && !m.read) {
-          partnerMap.get(partnerId)!.unread++;
+        const ids = [...partnerMap.keys()];
+        if (ids.length) {
+          const { data: profs } = await supabase
+            .from("profiles")
+            .select("id,username,avatar_url,name_color,text_color,is_guest")
+            .in("id", ids);
+          for (const p of profs ?? []) {
+            if (partnerMap.has(p.id)) partnerMap.get(p.id)!.partner = p as Profile;
+          }
         }
-      }
-      const ids = [...partnerMap.keys()];
-      if (ids.length) {
-        const { data: profs } = await supabase
-          .from("profiles")
-          .select("id,username,avatar_url,name_color,text_color,is_guest")
-          .in("id", ids);
-        for (const p of profs ?? []) {
-          if (partnerMap.has(p.id)) partnerMap.get(p.id)!.partner = p as Profile;
-        }
-      }
-      setConvs([...partnerMap.values()]);
-    })();
+        return [...partnerMap.values()];
+      },
+      setConvs,
+    );
   }, [user]);
 
   if (!user) return null;
