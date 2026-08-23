@@ -6,6 +6,8 @@ import { AppShell, PageHeader } from "@/components/AppShell";
 import { Avatar } from "@/components/Avatar";
 import { UserActionsDialog } from "@/components/UserActions";
 import { Search } from "lucide-react";
+import { swr } from "@/lib/cache";
+
 
 export const Route = createFileRoute("/members")({
   head: () => ({ meta: [{ title: "المتصلون - شات عالمي" }] }),
