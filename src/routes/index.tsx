@@ -4,6 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/use-auth";
 import { AppShell, PageHeader } from "@/components/AppShell";
 import { ChevronLeft, Users } from "lucide-react";
+import { swr } from "@/lib/cache";
+
 
 export const Route = createFileRoute("/")({
   head: () => ({
