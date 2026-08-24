@@ -13,6 +13,7 @@ import { Route as RulesRouteImport } from './routes/rules'
 import { Route as NotificationsRouteImport } from './routes/notifications'
 import { Route as NewsRouteImport } from './routes/news'
 import { Route as MembersRouteImport } from './routes/members'
+import { Route as EarnRouteImport } from './routes/earn'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AudioRouteImport } from './routes/audio'
 import { Route as IndexRouteImport } from './routes/index'
@@ -21,6 +22,7 @@ import { Route as MessagesIndexRouteImport } from './routes/messages.index'
 import { Route as ProfileUserIdRouteImport } from './routes/profile.$userId'
 import { Route as MessagesUserIdRouteImport } from './routes/messages.$userId'
 import { Route as ChatRoomIdRouteImport } from './routes/chat.$roomId'
+import { Route as ApiPublicAdsSsvRouteImport } from './routes/api/public/ads/ssv'
 
 const RulesRoute = RulesRouteImport.update({
   id: '/rules',
@@ -40,6 +42,11 @@ const NewsRoute = NewsRouteImport.update({
 const MembersRoute = MembersRouteImport.update({
   id: '/members',
   path: '/members',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EarnRoute = EarnRouteImport.update({
+  id: '/earn',
+  path: '/earn',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -82,11 +89,17 @@ const ChatRoomIdRoute = ChatRoomIdRouteImport.update({
   path: '/chat/$roomId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicAdsSsvRoute = ApiPublicAdsSsvRouteImport.update({
+  id: '/api/public/ads/ssv',
+  path: '/api/public/ads/ssv',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/audio': typeof AudioRoute
   '/auth': typeof AuthRoute
+  '/earn': typeof EarnRoute
   '/members': typeof MembersRoute
   '/news': typeof NewsRoute
   '/notifications': typeof NotificationsRoute
@@ -96,11 +109,13 @@ export interface FileRoutesByFullPath {
   '/profile/$userId': typeof ProfileUserIdRoute
   '/messages/': typeof MessagesIndexRoute
   '/profile/': typeof ProfileIndexRoute
+  '/api/public/ads/ssv': typeof ApiPublicAdsSsvRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/audio': typeof AudioRoute
   '/auth': typeof AuthRoute
+  '/earn': typeof EarnRoute
   '/members': typeof MembersRoute
   '/news': typeof NewsRoute
   '/notifications': typeof NotificationsRoute
@@ -110,12 +125,14 @@ export interface FileRoutesByTo {
   '/profile/$userId': typeof ProfileUserIdRoute
   '/messages': typeof MessagesIndexRoute
   '/profile': typeof ProfileIndexRoute
+  '/api/public/ads/ssv': typeof ApiPublicAdsSsvRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/audio': typeof AudioRoute
   '/auth': typeof AuthRoute
+  '/earn': typeof EarnRoute
   '/members': typeof MembersRoute
   '/news': typeof NewsRoute
   '/notifications': typeof NotificationsRoute
@@ -125,6 +142,7 @@ export interface FileRoutesById {
   '/profile/$userId': typeof ProfileUserIdRoute
   '/messages/': typeof MessagesIndexRoute
   '/profile/': typeof ProfileIndexRoute
+  '/api/public/ads/ssv': typeof ApiPublicAdsSsvRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -132,6 +150,7 @@ export interface FileRouteTypes {
     | '/'
     | '/audio'
     | '/auth'
+    | '/earn'
     | '/members'
     | '/news'
     | '/notifications'
@@ -141,11 +160,13 @@ export interface FileRouteTypes {
     | '/profile/$userId'
     | '/messages/'
     | '/profile/'
+    | '/api/public/ads/ssv'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/audio'
     | '/auth'
+    | '/earn'
     | '/members'
     | '/news'
     | '/notifications'
@@ -155,11 +176,13 @@ export interface FileRouteTypes {
     | '/profile/$userId'
     | '/messages'
     | '/profile'
+    | '/api/public/ads/ssv'
   id:
     | '__root__'
     | '/'
     | '/audio'
     | '/auth'
+    | '/earn'
     | '/members'
     | '/news'
     | '/notifications'
@@ -169,12 +192,14 @@ export interface FileRouteTypes {
     | '/profile/$userId'
     | '/messages/'
     | '/profile/'
+    | '/api/public/ads/ssv'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AudioRoute: typeof AudioRoute
   AuthRoute: typeof AuthRoute
+  EarnRoute: typeof EarnRoute
   MembersRoute: typeof MembersRoute
   NewsRoute: typeof NewsRoute
   NotificationsRoute: typeof NotificationsRoute
@@ -184,6 +209,7 @@ export interface RootRouteChildren {
   ProfileUserIdRoute: typeof ProfileUserIdRoute
   MessagesIndexRoute: typeof MessagesIndexRoute
   ProfileIndexRoute: typeof ProfileIndexRoute
+  ApiPublicAdsSsvRoute: typeof ApiPublicAdsSsvRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -214,6 +240,13 @@ declare module '@tanstack/react-router' {
       path: '/members'
       fullPath: '/members'
       preLoaderRoute: typeof MembersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/earn': {
+      id: '/earn'
+      path: '/earn'
+      fullPath: '/earn'
+      preLoaderRoute: typeof EarnRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth': {
@@ -272,6 +305,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ChatRoomIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/ads/ssv': {
+      id: '/api/public/ads/ssv'
+      path: '/api/public/ads/ssv'
+      fullPath: '/api/public/ads/ssv'
+      preLoaderRoute: typeof ApiPublicAdsSsvRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -279,6 +319,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AudioRoute: AudioRoute,
   AuthRoute: AuthRoute,
+  EarnRoute: EarnRoute,
   MembersRoute: MembersRoute,
   NewsRoute: NewsRoute,
   NotificationsRoute: NotificationsRoute,
@@ -288,6 +329,7 @@ const rootRouteChildren: RootRouteChildren = {
   ProfileUserIdRoute: ProfileUserIdRoute,
   MessagesIndexRoute: MessagesIndexRoute,
   ProfileIndexRoute: ProfileIndexRoute,
+  ApiPublicAdsSsvRoute: ApiPublicAdsSsvRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

@@ -80,7 +80,24 @@ function RoomsPage() {
         <div className="absolute -left-4 -bottom-4 size-32 bg-white/10 rounded-full blur-3xl" />
       </div>
 
+      <div className="px-4 mt-4">
+        <Link
+          to="/earn"
+          className="flex items-center justify-between p-4 rounded-2xl bg-surface border border-border hover:border-primary/40 transition-all"
+        >
+          <span className="flex items-center gap-3">
+            <span className="size-11 rounded-xl bg-primary/15 flex items-center justify-center text-xl">🎁</span>
+            <span>
+              <span className="block font-bold text-sm">شاهد واربح</span>
+              <span className="block text-[11px] text-muted-foreground">شاهد إعلاناً واحصل على مكافأة في محفظتك</span>
+            </span>
+          </span>
+          <ChevronLeft className="size-5 text-muted-foreground" />
+        </Link>
+      </div>
+
       <div className="px-4 mt-8">
+
         <h3 className="text-sm font-bold text-muted-foreground mb-3 px-1">جميع الغرف</h3>
         <div className="space-y-3">
           {rooms.map((room) => (

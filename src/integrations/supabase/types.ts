@@ -14,6 +14,66 @@ export type Database = {
   }
   public: {
     Tables: {
+      ad_reward_transactions: {
+        Row: {
+          ad_network: string
+          created_at: string
+          credit_status: string
+          id: string
+          notified_at: string | null
+          occurred_at: string
+          reward_amount: number
+          transaction_id: string
+          updated_at: string
+          user_id: string
+          verification_status: string
+        }
+        Insert: {
+          ad_network?: string
+          created_at?: string
+          credit_status?: string
+          id?: string
+          notified_at?: string | null
+          occurred_at?: string
+          reward_amount?: number
+          transaction_id: string
+          updated_at?: string
+          user_id: string
+          verification_status?: string
+        }
+        Update: {
+          ad_network?: string
+          created_at?: string
+          credit_status?: string
+          id?: string
+          notified_at?: string | null
+          occurred_at?: string
+          reward_amount?: number
+          transaction_id?: string
+          updated_at?: string
+          user_id?: string
+          verification_status?: string
+        }
+        Relationships: []
+      }
+      ad_view_requests: {
+        Row: {
+          created_at: string
+          transaction_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          transaction_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          transaction_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       cleanup_logs: {
         Row: {
           created_at: string
@@ -221,12 +281,53 @@ export type Database = {
         }
         Relationships: []
       }
+      wallets: {
+        Row: {
+          balance: number
+          created_at: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          balance?: number
+          created_at?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          balance?: number
+          created_at?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
       cleanup_expired_data: { Args: never; Returns: undefined }
+      credit_ad_reward: {
+        Args: {
+          _ad_network?: string
+          _gross_value: number
+          _transaction_id: string
+          _user_id: string
+        }
+        Returns: {
+          credited: boolean
+          reward: number
+        }[]
+      }
+      record_failed_ad_reward: {
+        Args: {
+          _ad_network?: string
+          _transaction_id: string
+          _user_id: string
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never
