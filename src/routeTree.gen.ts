@@ -21,6 +21,7 @@ import { Route as MessagesIndexRouteImport } from './routes/messages.index'
 import { Route as ProfileUserIdRouteImport } from './routes/profile.$userId'
 import { Route as MessagesUserIdRouteImport } from './routes/messages.$userId'
 import { Route as ChatRoomIdRouteImport } from './routes/chat.$roomId'
+import { Route as ApiPublicAdsSsvRouteImport } from './routes/api/public/ads/ssv'
 
 const RulesRoute = RulesRouteImport.update({
   id: '/rules',
@@ -82,6 +83,11 @@ const ChatRoomIdRoute = ChatRoomIdRouteImport.update({
   path: '/chat/$roomId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicAdsSsvRoute = ApiPublicAdsSsvRouteImport.update({
+  id: '/api/public/ads/ssv',
+  path: '/api/public/ads/ssv',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -96,6 +102,7 @@ export interface FileRoutesByFullPath {
   '/profile/$userId': typeof ProfileUserIdRoute
   '/messages/': typeof MessagesIndexRoute
   '/profile/': typeof ProfileIndexRoute
+  '/api/public/ads/ssv': typeof ApiPublicAdsSsvRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -110,6 +117,7 @@ export interface FileRoutesByTo {
   '/profile/$userId': typeof ProfileUserIdRoute
   '/messages': typeof MessagesIndexRoute
   '/profile': typeof ProfileIndexRoute
+  '/api/public/ads/ssv': typeof ApiPublicAdsSsvRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -125,6 +133,7 @@ export interface FileRoutesById {
   '/profile/$userId': typeof ProfileUserIdRoute
   '/messages/': typeof MessagesIndexRoute
   '/profile/': typeof ProfileIndexRoute
+  '/api/public/ads/ssv': typeof ApiPublicAdsSsvRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -141,6 +150,7 @@ export interface FileRouteTypes {
     | '/profile/$userId'
     | '/messages/'
     | '/profile/'
+    | '/api/public/ads/ssv'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -155,6 +165,7 @@ export interface FileRouteTypes {
     | '/profile/$userId'
     | '/messages'
     | '/profile'
+    | '/api/public/ads/ssv'
   id:
     | '__root__'
     | '/'
@@ -169,6 +180,7 @@ export interface FileRouteTypes {
     | '/profile/$userId'
     | '/messages/'
     | '/profile/'
+    | '/api/public/ads/ssv'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -184,6 +196,7 @@ export interface RootRouteChildren {
   ProfileUserIdRoute: typeof ProfileUserIdRoute
   MessagesIndexRoute: typeof MessagesIndexRoute
   ProfileIndexRoute: typeof ProfileIndexRoute
+  ApiPublicAdsSsvRoute: typeof ApiPublicAdsSsvRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -272,6 +285,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ChatRoomIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/ads/ssv': {
+      id: '/api/public/ads/ssv'
+      path: '/api/public/ads/ssv'
+      fullPath: '/api/public/ads/ssv'
+      preLoaderRoute: typeof ApiPublicAdsSsvRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -288,6 +308,7 @@ const rootRouteChildren: RootRouteChildren = {
   ProfileUserIdRoute: ProfileUserIdRoute,
   MessagesIndexRoute: MessagesIndexRoute,
   ProfileIndexRoute: ProfileIndexRoute,
+  ApiPublicAdsSsvRoute: ApiPublicAdsSsvRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
