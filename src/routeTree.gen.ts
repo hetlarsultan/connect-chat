@@ -13,6 +13,7 @@ import { Route as RulesRouteImport } from './routes/rules'
 import { Route as NotificationsRouteImport } from './routes/notifications'
 import { Route as NewsRouteImport } from './routes/news'
 import { Route as MembersRouteImport } from './routes/members'
+import { Route as EarnRouteImport } from './routes/earn'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AudioRouteImport } from './routes/audio'
 import { Route as IndexRouteImport } from './routes/index'
@@ -41,6 +42,11 @@ const NewsRoute = NewsRouteImport.update({
 const MembersRoute = MembersRouteImport.update({
   id: '/members',
   path: '/members',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EarnRoute = EarnRouteImport.update({
+  id: '/earn',
+  path: '/earn',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -93,6 +99,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/audio': typeof AudioRoute
   '/auth': typeof AuthRoute
+  '/earn': typeof EarnRoute
   '/members': typeof MembersRoute
   '/news': typeof NewsRoute
   '/notifications': typeof NotificationsRoute
@@ -108,6 +115,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/audio': typeof AudioRoute
   '/auth': typeof AuthRoute
+  '/earn': typeof EarnRoute
   '/members': typeof MembersRoute
   '/news': typeof NewsRoute
   '/notifications': typeof NotificationsRoute
@@ -124,6 +132,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/audio': typeof AudioRoute
   '/auth': typeof AuthRoute
+  '/earn': typeof EarnRoute
   '/members': typeof MembersRoute
   '/news': typeof NewsRoute
   '/notifications': typeof NotificationsRoute
@@ -141,6 +150,7 @@ export interface FileRouteTypes {
     | '/'
     | '/audio'
     | '/auth'
+    | '/earn'
     | '/members'
     | '/news'
     | '/notifications'
@@ -156,6 +166,7 @@ export interface FileRouteTypes {
     | '/'
     | '/audio'
     | '/auth'
+    | '/earn'
     | '/members'
     | '/news'
     | '/notifications'
@@ -171,6 +182,7 @@ export interface FileRouteTypes {
     | '/'
     | '/audio'
     | '/auth'
+    | '/earn'
     | '/members'
     | '/news'
     | '/notifications'
@@ -187,6 +199,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AudioRoute: typeof AudioRoute
   AuthRoute: typeof AuthRoute
+  EarnRoute: typeof EarnRoute
   MembersRoute: typeof MembersRoute
   NewsRoute: typeof NewsRoute
   NotificationsRoute: typeof NotificationsRoute
@@ -227,6 +240,13 @@ declare module '@tanstack/react-router' {
       path: '/members'
       fullPath: '/members'
       preLoaderRoute: typeof MembersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/earn': {
+      id: '/earn'
+      path: '/earn'
+      fullPath: '/earn'
+      preLoaderRoute: typeof EarnRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth': {
@@ -299,6 +319,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AudioRoute: AudioRoute,
   AuthRoute: AuthRoute,
+  EarnRoute: EarnRoute,
   MembersRoute: MembersRoute,
   NewsRoute: NewsRoute,
   NotificationsRoute: NotificationsRoute,
