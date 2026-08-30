@@ -123,6 +123,11 @@ function EarnPage() {
   const [waiting, setWaiting] = useState(false);
   const [mock, setMock] = useState(false);
   const [mockTxns, setMockTxns] = useState<MockTxn[]>([]);
+  const [query, setQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"all" | StatusKey>("all");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
+  const [recheckId, setRecheckId] = useState<string | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const lockRef = useRef(false);
 
