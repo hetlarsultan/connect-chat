@@ -194,6 +194,21 @@ function EarnPage() {
     };
   }, [waiting, user, load]);
 
+  const hasPending = useMemo(
+    () => txns.some((t) => t.verification_status === "pending" && t.credit_status !== "credited"),
+    [txns],
+  );
+
+  /* تحديث تلقائي لحالة SSV كل 10 ثوانٍ ما دامت هناك عمليات قيد المراجعة. */
+  useEffect(() => {
+    if (!user || !hasPending || !autoRefresh) return;
+    const t = setInterval(() => {
+      if (document.hidden) return;
+      void load();
+    }, 10_000);
+    return () => clearInterval(t);
+  }, [user, hasPending, autoRefresh, load]);
+
   const locked = busy || waiting;
 
   const watch = async () => {
