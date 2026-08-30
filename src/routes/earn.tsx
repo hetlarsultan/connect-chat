@@ -451,6 +451,21 @@ function EarnPage() {
             </span>
           </div>
 
+          {hasPending && (
+            <label className="flex items-center justify-between gap-2 px-3 py-2 mb-3 rounded-xl bg-surface border border-border text-[11px] font-semibold">
+              <span className="flex items-center gap-2 text-muted-foreground">
+                <RefreshCw className={`size-3.5 ${autoRefresh ? "animate-spin [animation-duration:3s]" : ""}`} />
+                تحديث تلقائي لحالة «قيد المراجعة» كل 10 ثوانٍ
+              </span>
+              <input
+                type="checkbox"
+                checked={autoRefresh}
+                onChange={(e) => setAutoRefresh(e.target.checked)}
+                className="size-4 accent-[hsl(var(--primary))]"
+              />
+            </label>
+          )}
+
           {/* بحث وفلترة */}
           <div className="p-3 rounded-2xl bg-surface border border-border space-y-2 mb-3">
             <div className="relative">
