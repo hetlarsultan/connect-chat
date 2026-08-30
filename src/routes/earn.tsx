@@ -434,11 +434,93 @@ function EarnPage() {
               مُضافة {stats.credited} · قيد التحقق {stats.pending} · فاشلة {stats.failed}
             </span>
           </div>
+
+          {/* بحث وفلترة */}
+          <div className="p-3 rounded-2xl bg-surface border border-border space-y-2 mb-3">
+            <div className="relative">
+              <Search className="size-4 absolute top-2.5 start-3 text-muted-foreground" />
+              <input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="ابحث برقم العملية (transaction_id)"
+                className="w-full ps-9 pe-3 py-2 rounded-xl bg-background border border-border text-xs outline-none focus:border-primary"
+              />
+            </div>
+            <div className="grid grid-cols-4 gap-1.5">
+              {([
+                ["all", "الكل"],
+                ["credited", "ناجح"],
+                ["pending", "قيد"],
+                ["failed", "فشل"],
+              ] as const).map(([key, label]) => (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => setStatusFilter(key)}
+                  className={`py-1.5 rounded-xl text-[11px] font-bold border ${
+                    statusFilter === key
+                      ? "bg-primary text-primary-foreground border-primary"
+                      : "bg-background border-border text-muted-foreground"
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <label className="text-[10px] text-muted-foreground space-y-1">
+                <span>من تاريخ</span>
+                <input
+                  type="date"
+                  value={dateFrom}
+                  onChange={(e) => setDateFrom(e.target.value)}
+                  className="w-full px-2 py-1.5 rounded-xl bg-background border border-border text-xs"
+                />
+              </label>
+              <label className="text-[10px] text-muted-foreground space-y-1">
+                <span>إلى تاريخ</span>
+                <input
+                  type="date"
+                  value={dateTo}
+                  onChange={(e) => setDateTo(e.target.value)}
+                  className="w-full px-2 py-1.5 rounded-xl bg-background border border-border text-xs"
+                />
+              </label>
+            </div>
+            <div className="flex items-center justify-between gap-2 pt-1">
+              <span className="text-[10px] text-muted-foreground">النتائج: {filtered.length}</span>
+              <div className="flex items-center gap-2">
+                {(query || statusFilter !== "all" || dateFrom || dateTo) && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setQuery("");
+                      setStatusFilter("all");
+                      setDateFrom("");
+                      setDateTo("");
+                    }}
+                    className="px-3 py-1.5 rounded-xl bg-muted text-[11px] font-bold"
+                  >
+                    تصفير الفلترة
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={downloadCsv}
+                  className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-primary/15 text-[11px] font-bold"
+                >
+                  <Download className="size-3.5" /> تنزيل CSV
+                </button>
+              </div>
+            </div>
+          </div>
+
           <div className="space-y-2">
-            {txns.length === 0 && (
-              <p className="text-xs text-muted-foreground px-1">لا توجد عمليات بعد.</p>
+            {txns.length === 0 && <p className="text-xs text-muted-foreground px-1">لا توجد عمليات بعد.</p>}
+            {txns.length > 0 && filtered.length === 0 && (
+              <p className="text-xs text-muted-foreground px-1">لا توجد نتائج مطابقة للبحث أو الفلترة.</p>
             )}
-            {txns.map((t) => (
+            {filtered.map((t) => (
               <div key={t.id} className="p-3 rounded-2xl bg-surface border border-border text-xs">
                 <div className="flex items-center justify-between gap-2">
                   <span className="font-bold tabular-nums">
@@ -446,16 +528,34 @@ function EarnPage() {
                   </span>
                   <StatusPill verification={t.verification_status} credit={t.credit_status} />
                 </div>
-                <div className="mt-1 text-muted-foreground">
-                  {new Date(t.occurred_at).toLocaleString("ar")}
-                </div>
+                <div className="mt-1 text-muted-foreground">{new Date(t.occurred_at).toLocaleString("ar")}</div>
                 <div className="text-[10px] text-muted-foreground/70 mt-0.5 truncate">
                   رقم العملية: {t.transaction_id}
                 </div>
+                <p className="text-[10px] text-muted-foreground/80 mt-1.5 leading-relaxed">{statusDetail(t)}</p>
+                <div className="text-[10px] text-muted-foreground/60 mt-1">
+                  حالة التحقق: {t.verification_status} · حالة الرصيد: {t.credit_status}
+                </div>
+                {statusKey(t) === "pending" && (
+                  <button
+                    type="button"
+                    onClick={() => void recheck(t)}
+                    disabled={recheckId === t.id}
+                    className="mt-2 w-full flex items-center justify-center gap-1.5 py-2 rounded-xl bg-primary/15 text-[11px] font-bold disabled:opacity-50"
+                  >
+                    {recheckId === t.id ? (
+                      <Loader2 className="size-3.5 animate-spin" />
+                    ) : (
+                      <RefreshCw className="size-3.5" />
+                    )}
+                    إعادة محاولة جلب حالة التحقق
+                  </button>
+                )}
               </div>
             ))}
           </div>
         </div>
+
       </div>
     </AppShell>
   );
