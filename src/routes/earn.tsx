@@ -1,7 +1,18 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
-import { PlayCircle, Wallet, Loader2, FlaskConical, ShieldCheck, ShieldAlert, Clock } from "lucide-react";
+import {
+  PlayCircle,
+  Wallet,
+  Loader2,
+  FlaskConical,
+  ShieldCheck,
+  ShieldAlert,
+  Clock,
+  Search,
+  Download,
+  RefreshCw,
+} from "lucide-react";
 import { AppShell, PageHeader } from "@/components/AppShell";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/use-auth";
@@ -13,6 +24,7 @@ import {
   runMockFlow,
   type MockOutcome,
 } from "@/lib/rewarded-ad";
+
 
 export const Route = createFileRoute("/earn")({
   head: () => ({
@@ -69,6 +81,40 @@ function StatusPill({ verification, credit }: { verification: string; credit: st
   );
 }
 
+type StatusKey = "credited" | "pending" | "failed";
+
+function statusKey(t: { verification_status: string; credit_status: string }): StatusKey {
+  if (t.credit_status === "credited") return "credited";
+  if (t.verification_status === "failed" || t.verification_status === "cancelled") return "failed";
+  return "pending";
+}
+
+function statusLabel(t: { verification_status: string; credit_status: string }): string {
+  const k = statusKey(t);
+  return k === "credited" ? "ناجح" : k === "failed" ? "فشل" : "قيد المراجعة";
+}
+
+/** توضيح سبب الحالة قدر ما تسمح به بيانات الاستجابة المخزّنة. */
+function statusDetail(t: { verification_status: string; credit_status: string }): string {
+  if (t.credit_status === "credited") return "تم التحقق من المشاهدة عبر SSV وأُضيفت النسبة إلى محفظتك.";
+  if (t.verification_status === "cancelled")
+    return "السبب: أُلغي الإعلان أو أُغلق قبل إكمال المشاهدة، لذلك لم تصل استجابة تحقق صالحة ولم يُضف أي رصيد.";
+  if (t.verification_status === "failed")
+    return "السبب: لم يُقبل توقيع التحقق (SSV) من شبكة الإعلانات أو لم تتطابق بيانات العملية، لذلك لم يُضف أي رصيد.";
+  if (t.verification_status === "verified" && t.credit_status !== "credited")
+    return "تم التحقق من المشاهدة، وإضافة الرصيد قيد المعالجة.";
+  return "لم تصل استجابة التحقق (SSV) من شبكة الإعلانات بعد. يمكنك إعادة محاولة جلب الحالة دون إعادة تشغيل الإعلان.";
+}
+
+function toCsv(rows: Txn[]): string {
+  const esc = (v: string) => `"${v.replace(/"/g, '""')}"`;
+  const head = ["transaction_id", "occurred_at", "status"].map(esc).join(",");
+  const body = rows.map((t) =>
+    [esc(t.transaction_id), esc(new Date(t.occurred_at).toISOString()), esc(statusLabel(t))].join(","),
+  );
+  return [head, ...body].join("\r\n");
+}
+
 function EarnPage() {
   const { user, profile } = useAuth();
   const [balance, setBalance] = useState<number | null>(null);
@@ -77,6 +123,11 @@ function EarnPage() {
   const [waiting, setWaiting] = useState(false);
   const [mock, setMock] = useState(false);
   const [mockTxns, setMockTxns] = useState<MockTxn[]>([]);
+  const [query, setQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"all" | StatusKey>("all");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
+  const [recheckId, setRecheckId] = useState<string | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const lockRef = useRef(false);
 
@@ -217,7 +268,64 @@ function EarnPage() {
     return { credited, pending, failed };
   }, [txns]);
 
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    const from = dateFrom ? new Date(`${dateFrom}T00:00:00`).getTime() : null;
+    const to = dateTo ? new Date(`${dateTo}T23:59:59`).getTime() : null;
+    return txns.filter((t) => {
+      if (q && !t.transaction_id.toLowerCase().includes(q)) return false;
+      if (statusFilter !== "all" && statusKey(t) !== statusFilter) return false;
+      const ts = new Date(t.occurred_at).getTime();
+      if (from !== null && ts < from) return false;
+      if (to !== null && ts > to) return false;
+      return true;
+    });
+  }, [txns, query, statusFilter, dateFrom, dateTo]);
+
+  /** إعادة جلب حالة التحقق (SSV) للعملية من قاعدة البيانات دون إعادة تشغيل الإعلان. */
+  const recheck = async (row: Txn) => {
+    if (!user) return;
+    setRecheckId(row.id);
+    try {
+      const { data } = await supabase
+        .from("ad_reward_transactions")
+        .select("id,transaction_id,reward_amount,verification_status,credit_status,occurred_at,notified_at")
+        .eq("user_id", user.id)
+        .eq("transaction_id", row.transaction_id)
+        .maybeSingle();
+      if (data) {
+        const fresh = data as Txn;
+        setTxns((prev) => prev.map((t) => (t.id === fresh.id ? fresh : t)));
+        if (fresh.credit_status === "credited") toast.success("تمت إضافة مكافأتك إلى محفظتك بنجاح.");
+        else if (fresh.verification_status === "failed") toast.error("فشل التحقق من المشاهدة، لذلك لم يُضف أي رصيد.");
+        else toast.info("لا تزال العملية قيد التحقق (SSV).");
+      } else {
+        toast.info("لا تزال العملية قيد التحقق (SSV).");
+      }
+      void load();
+    } catch {
+      toast.error("تعذّر جلب حالة التحقق، حاول لاحقاً.");
+    } finally {
+      setRecheckId(null);
+    }
+  };
+
+  const downloadCsv = () => {
+    if (!filtered.length) {
+      toast.info("لا توجد عمليات لتنزيلها.");
+      return;
+    }
+    const blob = new Blob(["\ufeff" + toCsv(filtered)], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `rewards-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   if (!profile) return null;
+
 
   return (
     <AppShell>
@@ -326,11 +434,93 @@ function EarnPage() {
               مُضافة {stats.credited} · قيد التحقق {stats.pending} · فاشلة {stats.failed}
             </span>
           </div>
+
+          {/* بحث وفلترة */}
+          <div className="p-3 rounded-2xl bg-surface border border-border space-y-2 mb-3">
+            <div className="relative">
+              <Search className="size-4 absolute top-2.5 start-3 text-muted-foreground" />
+              <input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="ابحث برقم العملية (transaction_id)"
+                className="w-full ps-9 pe-3 py-2 rounded-xl bg-background border border-border text-xs outline-none focus:border-primary"
+              />
+            </div>
+            <div className="grid grid-cols-4 gap-1.5">
+              {([
+                ["all", "الكل"],
+                ["credited", "ناجح"],
+                ["pending", "قيد"],
+                ["failed", "فشل"],
+              ] as const).map(([key, label]) => (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => setStatusFilter(key)}
+                  className={`py-1.5 rounded-xl text-[11px] font-bold border ${
+                    statusFilter === key
+                      ? "bg-primary text-primary-foreground border-primary"
+                      : "bg-background border-border text-muted-foreground"
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <label className="text-[10px] text-muted-foreground space-y-1">
+                <span>من تاريخ</span>
+                <input
+                  type="date"
+                  value={dateFrom}
+                  onChange={(e) => setDateFrom(e.target.value)}
+                  className="w-full px-2 py-1.5 rounded-xl bg-background border border-border text-xs"
+                />
+              </label>
+              <label className="text-[10px] text-muted-foreground space-y-1">
+                <span>إلى تاريخ</span>
+                <input
+                  type="date"
+                  value={dateTo}
+                  onChange={(e) => setDateTo(e.target.value)}
+                  className="w-full px-2 py-1.5 rounded-xl bg-background border border-border text-xs"
+                />
+              </label>
+            </div>
+            <div className="flex items-center justify-between gap-2 pt-1">
+              <span className="text-[10px] text-muted-foreground">النتائج: {filtered.length}</span>
+              <div className="flex items-center gap-2">
+                {(query || statusFilter !== "all" || dateFrom || dateTo) && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setQuery("");
+                      setStatusFilter("all");
+                      setDateFrom("");
+                      setDateTo("");
+                    }}
+                    className="px-3 py-1.5 rounded-xl bg-muted text-[11px] font-bold"
+                  >
+                    تصفير الفلترة
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={downloadCsv}
+                  className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-primary/15 text-[11px] font-bold"
+                >
+                  <Download className="size-3.5" /> تنزيل CSV
+                </button>
+              </div>
+            </div>
+          </div>
+
           <div className="space-y-2">
-            {txns.length === 0 && (
-              <p className="text-xs text-muted-foreground px-1">لا توجد عمليات بعد.</p>
+            {txns.length === 0 && <p className="text-xs text-muted-foreground px-1">لا توجد عمليات بعد.</p>}
+            {txns.length > 0 && filtered.length === 0 && (
+              <p className="text-xs text-muted-foreground px-1">لا توجد نتائج مطابقة للبحث أو الفلترة.</p>
             )}
-            {txns.map((t) => (
+            {filtered.map((t) => (
               <div key={t.id} className="p-3 rounded-2xl bg-surface border border-border text-xs">
                 <div className="flex items-center justify-between gap-2">
                   <span className="font-bold tabular-nums">
@@ -338,16 +528,34 @@ function EarnPage() {
                   </span>
                   <StatusPill verification={t.verification_status} credit={t.credit_status} />
                 </div>
-                <div className="mt-1 text-muted-foreground">
-                  {new Date(t.occurred_at).toLocaleString("ar")}
-                </div>
+                <div className="mt-1 text-muted-foreground">{new Date(t.occurred_at).toLocaleString("ar")}</div>
                 <div className="text-[10px] text-muted-foreground/70 mt-0.5 truncate">
                   رقم العملية: {t.transaction_id}
                 </div>
+                <p className="text-[10px] text-muted-foreground/80 mt-1.5 leading-relaxed">{statusDetail(t)}</p>
+                <div className="text-[10px] text-muted-foreground/60 mt-1">
+                  حالة التحقق: {t.verification_status} · حالة الرصيد: {t.credit_status}
+                </div>
+                {statusKey(t) === "pending" && (
+                  <button
+                    type="button"
+                    onClick={() => void recheck(t)}
+                    disabled={recheckId === t.id}
+                    className="mt-2 w-full flex items-center justify-center gap-1.5 py-2 rounded-xl bg-primary/15 text-[11px] font-bold disabled:opacity-50"
+                  >
+                    {recheckId === t.id ? (
+                      <Loader2 className="size-3.5 animate-spin" />
+                    ) : (
+                      <RefreshCw className="size-3.5" />
+                    )}
+                    إعادة محاولة جلب حالة التحقق
+                  </button>
+                )}
               </div>
             ))}
           </div>
         </div>
+
       </div>
     </AppShell>
   );
