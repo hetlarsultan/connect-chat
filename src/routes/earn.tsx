@@ -1,7 +1,18 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
-import { PlayCircle, Wallet, Loader2, FlaskConical, ShieldCheck, ShieldAlert, Clock } from "lucide-react";
+import {
+  PlayCircle,
+  Wallet,
+  Loader2,
+  FlaskConical,
+  ShieldCheck,
+  ShieldAlert,
+  Clock,
+  Search,
+  Download,
+  RefreshCw,
+} from "lucide-react";
 import { AppShell, PageHeader } from "@/components/AppShell";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/use-auth";
@@ -13,6 +24,7 @@ import {
   runMockFlow,
   type MockOutcome,
 } from "@/lib/rewarded-ad";
+
 
 export const Route = createFileRoute("/earn")({
   head: () => ({
