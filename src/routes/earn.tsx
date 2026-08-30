@@ -81,6 +81,40 @@ function StatusPill({ verification, credit }: { verification: string; credit: st
   );
 }
 
+type StatusKey = "credited" | "pending" | "failed";
+
+function statusKey(t: { verification_status: string; credit_status: string }): StatusKey {
+  if (t.credit_status === "credited") return "credited";
+  if (t.verification_status === "failed" || t.verification_status === "cancelled") return "failed";
+  return "pending";
+}
+
+function statusLabel(t: { verification_status: string; credit_status: string }): string {
+  const k = statusKey(t);
+  return k === "credited" ? "ناجح" : k === "failed" ? "فشل" : "قيد المراجعة";
+}
+
+/** توضيح سبب الحالة قدر ما تسمح به بيانات الاستجابة المخزّنة. */
+function statusDetail(t: { verification_status: string; credit_status: string }): string {
+  if (t.credit_status === "credited") return "تم التحقق من المشاهدة عبر SSV وأُضيفت النسبة إلى محفظتك.";
+  if (t.verification_status === "cancelled")
+    return "السبب: أُلغي الإعلان أو أُغلق قبل إكمال المشاهدة، لذلك لم تصل استجابة تحقق صالحة ولم يُضف أي رصيد.";
+  if (t.verification_status === "failed")
+    return "السبب: لم يُقبل توقيع التحقق (SSV) من شبكة الإعلانات أو لم تتطابق بيانات العملية، لذلك لم يُضف أي رصيد.";
+  if (t.verification_status === "verified" && t.credit_status !== "credited")
+    return "تم التحقق من المشاهدة، وإضافة الرصيد قيد المعالجة.";
+  return "لم تصل استجابة التحقق (SSV) من شبكة الإعلانات بعد. يمكنك إعادة محاولة جلب الحالة دون إعادة تشغيل الإعلان.";
+}
+
+function toCsv(rows: Txn[]): string {
+  const esc = (v: string) => `"${v.replace(/"/g, '""')}"`;
+  const head = ["transaction_id", "occurred_at", "status"].map(esc).join(",");
+  const body = rows.map((t) =>
+    [esc(t.transaction_id), esc(new Date(t.occurred_at).toISOString()), esc(statusLabel(t))].join(","),
+  );
+  return [head, ...body].join("\r\n");
+}
+
 function EarnPage() {
   const { user, profile } = useAuth();
   const [balance, setBalance] = useState<number | null>(null);
