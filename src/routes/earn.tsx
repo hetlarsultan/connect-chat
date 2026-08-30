@@ -266,9 +266,71 @@ function EarnPage() {
     const pending = txns.filter((t) => t.credit_status !== "credited" && t.verification_status === "pending").length;
     const failed = txns.filter((t) => t.verification_status === "failed").length;
     return { credited, pending, failed };
+  const stats = useMemo(() => {
+    const credited = txns.filter((t) => t.credit_status === "credited").length;
+    const pending = txns.filter((t) => t.credit_status !== "credited" && t.verification_status === "pending").length;
+    const failed = txns.filter((t) => t.verification_status === "failed").length;
+    return { credited, pending, failed };
   }, [txns]);
 
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    const from = dateFrom ? new Date(`${dateFrom}T00:00:00`).getTime() : null;
+    const to = dateTo ? new Date(`${dateTo}T23:59:59`).getTime() : null;
+    return txns.filter((t) => {
+      if (q && !t.transaction_id.toLowerCase().includes(q)) return false;
+      if (statusFilter !== "all" && statusKey(t) !== statusFilter) return false;
+      const ts = new Date(t.occurred_at).getTime();
+      if (from !== null && ts < from) return false;
+      if (to !== null && ts > to) return false;
+      return true;
+    });
+  }, [txns, query, statusFilter, dateFrom, dateTo]);
+
+  /** إعادة جلب حالة التحقق (SSV) للعملية من قاعدة البيانات دون إعادة تشغيل الإعلان. */
+  const recheck = async (row: Txn) => {
+    if (!user) return;
+    setRecheckId(row.id);
+    try {
+      const { data } = await supabase
+        .from("ad_reward_transactions")
+        .select("id,transaction_id,reward_amount,verification_status,credit_status,occurred_at,notified_at")
+        .eq("user_id", user.id)
+        .eq("transaction_id", row.transaction_id)
+        .maybeSingle();
+      if (data) {
+        const fresh = data as Txn;
+        setTxns((prev) => prev.map((t) => (t.id === fresh.id ? fresh : t)));
+        if (fresh.credit_status === "credited") toast.success("تمت إضافة مكافأتك إلى محفظتك بنجاح.");
+        else if (fresh.verification_status === "failed") toast.error("فشل التحقق من المشاهدة، لذلك لم يُضف أي رصيد.");
+        else toast.info("لا تزال العملية قيد التحقق (SSV).");
+      } else {
+        toast.info("لا تزال العملية قيد التحقق (SSV).");
+      }
+      void load();
+    } catch {
+      toast.error("تعذّر جلب حالة التحقق، حاول لاحقاً.");
+    } finally {
+      setRecheckId(null);
+    }
+  };
+
+  const downloadCsv = () => {
+    if (!filtered.length) {
+      toast.info("لا توجد عمليات لتنزيلها.");
+      return;
+    }
+    const blob = new Blob(["\ufeff" + toCsv(filtered)], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `rewards-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   if (!profile) return null;
+
 
   return (
     <AppShell>
