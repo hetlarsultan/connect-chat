@@ -266,11 +266,6 @@ function EarnPage() {
     const pending = txns.filter((t) => t.credit_status !== "credited" && t.verification_status === "pending").length;
     const failed = txns.filter((t) => t.verification_status === "failed").length;
     return { credited, pending, failed };
-  const stats = useMemo(() => {
-    const credited = txns.filter((t) => t.credit_status === "credited").length;
-    const pending = txns.filter((t) => t.credit_status !== "credited" && t.verification_status === "pending").length;
-    const failed = txns.filter((t) => t.verification_status === "failed").length;
-    return { credited, pending, failed };
   }, [txns]);
 
   const filtered = useMemo(() => {
