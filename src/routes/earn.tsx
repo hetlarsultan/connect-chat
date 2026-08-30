@@ -128,6 +128,7 @@ function EarnPage() {
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [recheckId, setRecheckId] = useState<string | null>(null);
+  const [autoRefresh, setAutoRefresh] = useState(true);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const lockRef = useRef(false);
 
@@ -193,6 +194,21 @@ function EarnPage() {
       if (pollRef.current) clearInterval(pollRef.current);
     };
   }, [waiting, user, load]);
+
+  const hasPending = useMemo(
+    () => txns.some((t) => t.verification_status === "pending" && t.credit_status !== "credited"),
+    [txns],
+  );
+
+  /* تحديث تلقائي لحالة SSV كل 10 ثوانٍ ما دامت هناك عمليات قيد المراجعة. */
+  useEffect(() => {
+    if (!user || !hasPending || !autoRefresh) return;
+    const t = setInterval(() => {
+      if (document.hidden) return;
+      void load();
+    }, 10_000);
+    return () => clearInterval(t);
+  }, [user, hasPending, autoRefresh, load]);
 
   const locked = busy || waiting;
 
@@ -434,6 +450,21 @@ function EarnPage() {
               مُضافة {stats.credited} · قيد التحقق {stats.pending} · فاشلة {stats.failed}
             </span>
           </div>
+
+          {hasPending && (
+            <label className="flex items-center justify-between gap-2 px-3 py-2 mb-3 rounded-xl bg-surface border border-border text-[11px] font-semibold">
+              <span className="flex items-center gap-2 text-muted-foreground">
+                <RefreshCw className={`size-3.5 ${autoRefresh ? "animate-spin [animation-duration:3s]" : ""}`} />
+                تحديث تلقائي لحالة «قيد المراجعة» كل 10 ثوانٍ
+              </span>
+              <input
+                type="checkbox"
+                checked={autoRefresh}
+                onChange={(e) => setAutoRefresh(e.target.checked)}
+                className="size-4 accent-[hsl(var(--primary))]"
+              />
+            </label>
+          )}
 
           {/* بحث وفلترة */}
           <div className="p-3 rounded-2xl bg-surface border border-border space-y-2 mb-3">
