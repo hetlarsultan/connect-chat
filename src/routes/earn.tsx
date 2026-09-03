@@ -108,11 +108,29 @@ function statusDetail(t: { verification_status: string; credit_status: string })
 
 function toCsv(rows: Txn[]): string {
   const esc = (v: string) => `"${v.replace(/"/g, '""')}"`;
-  const head = ["transaction_id", "occurred_at", "status"].map(esc).join(",");
+  const head = ["transaction_id", "occurred_at", "status", "reason"].map(esc).join(",");
   const body = rows.map((t) =>
-    [esc(t.transaction_id), esc(new Date(t.occurred_at).toISOString()), esc(statusLabel(t))].join(","),
+    [
+      esc(t.transaction_id),
+      esc(new Date(t.occurred_at).toISOString()),
+      esc(statusLabel(t)),
+      esc(statusDetail(t)),
+    ].join(","),
   );
   return [head, ...body].join("\r\n");
+}
+
+const REFRESH_KEY = "earn_auto_refresh_secs_v1";
+const REFRESH_OPTIONS = [10, 20, 30] as const;
+
+function loadRefreshSecs(): number {
+  if (typeof window === "undefined") return 10;
+  try {
+    const v = Number(localStorage.getItem(REFRESH_KEY));
+    return REFRESH_OPTIONS.includes(v as 10 | 20 | 30) ? v : 10;
+  } catch {
+    return 10;
+  }
 }
 
 function EarnPage() {
