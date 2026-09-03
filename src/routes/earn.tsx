@@ -147,7 +147,8 @@ function EarnPage() {
   const [dateTo, setDateTo] = useState("");
   const [recheckId, setRecheckId] = useState<string | null>(null);
   const [autoRefresh, setAutoRefresh] = useState(true);
-  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [refreshSecs, setRefreshSecs] = useState(10);
+
   const lockRef = useRef(false);
 
   useEffect(() => {
