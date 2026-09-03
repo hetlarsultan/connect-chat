@@ -221,15 +221,15 @@ function EarnPage() {
     [txns],
   );
 
-  /* تحديث تلقائي لحالة SSV كل 10 ثوانٍ ما دامت هناك عمليات قيد المراجعة. */
+  /* تحديث تلقائي لحالة SSV بالتردد المختار ما دامت هناك عمليات قيد المراجعة. */
   useEffect(() => {
     if (!user || !hasPending || !autoRefresh) return;
     const t = setInterval(() => {
       if (document.hidden) return;
       void load();
-    }, 10_000);
+    }, refreshSecs * 1000);
     return () => clearInterval(t);
-  }, [user, hasPending, autoRefresh, load]);
+  }, [user, hasPending, autoRefresh, refreshSecs, load]);
 
   const locked = busy || waiting;
 
