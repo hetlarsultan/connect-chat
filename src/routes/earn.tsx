@@ -148,12 +148,14 @@ function EarnPage() {
   const [recheckId, setRecheckId] = useState<string | null>(null);
   const [autoRefresh, setAutoRefresh] = useState(true);
   const [refreshSecs, setRefreshSecs] = useState(10);
-
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const lockRef = useRef(false);
 
   useEffect(() => {
     setMock(isMockMode());
+    setRefreshSecs(loadRefreshSecs());
   }, []);
+
 
   const load = useCallback(async () => {
     if (!user) return;
