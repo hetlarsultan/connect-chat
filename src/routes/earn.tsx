@@ -473,18 +473,48 @@ function EarnPage() {
           </div>
 
           {hasPending && (
-            <label className="flex items-center justify-between gap-2 px-3 py-2 mb-3 rounded-xl bg-surface border border-border text-[11px] font-semibold">
-              <span className="flex items-center gap-2 text-muted-foreground">
-                <RefreshCw className={`size-3.5 ${autoRefresh ? "animate-spin [animation-duration:3s]" : ""}`} />
-                تحديث تلقائي لحالة «قيد المراجعة» كل 10 ثوانٍ
-              </span>
-              <input
-                type="checkbox"
-                checked={autoRefresh}
-                onChange={(e) => setAutoRefresh(e.target.checked)}
-                className="size-4 accent-[hsl(var(--primary))]"
-              />
-            </label>
+            <div className="px-3 py-2 mb-3 rounded-xl bg-surface border border-border space-y-2">
+              <label className="flex items-center justify-between gap-2 text-[11px] font-semibold">
+                <span className="flex items-center gap-2 text-muted-foreground">
+                  <RefreshCw className={`size-3.5 ${autoRefresh ? "animate-spin [animation-duration:3s]" : ""}`} />
+                  تحديث تلقائي لحالة «قيد المراجعة»
+                </span>
+                <input
+                  type="checkbox"
+                  checked={autoRefresh}
+                  onChange={(e) => setAutoRefresh(e.target.checked)}
+                  className="size-4 accent-[hsl(var(--primary))]"
+                />
+              </label>
+              {autoRefresh && (
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-[10px] text-muted-foreground">تردد التحديث</span>
+                  <div className="flex gap-1.5">
+                    {REFRESH_OPTIONS.map((s) => (
+                      <button
+                        key={s}
+                        type="button"
+                        onClick={() => {
+                          setRefreshSecs(s);
+                          try {
+                            localStorage.setItem(REFRESH_KEY, String(s));
+                          } catch {
+                            /* ignore */
+                          }
+                        }}
+                        className={`px-3 py-1 rounded-xl text-[11px] font-bold border ${
+                          refreshSecs === s
+                            ? "bg-primary text-primary-foreground border-primary"
+                            : "bg-background border-border text-muted-foreground"
+                        }`}
+                      >
+                        {s} ث
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
           )}
 
           {/* بحث وفلترة */}
