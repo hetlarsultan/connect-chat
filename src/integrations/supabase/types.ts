@@ -254,6 +254,42 @@ export type Database = {
         }
         Relationships: []
       }
+      revenue_transfers: {
+        Row: {
+          amount: number
+          created_at: string
+          created_by: string
+          id: string
+          network_amount: number
+          network_pct: number
+          note: string | null
+          owner_amount: number
+          status: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          created_by: string
+          id?: string
+          network_amount?: number
+          network_pct?: number
+          note?: string | null
+          owner_amount?: number
+          status?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          created_by?: string
+          id?: string
+          network_amount?: number
+          network_pct?: number
+          note?: string | null
+          owner_amount?: number
+          status?: string
+        }
+        Relationships: []
+      }
       rooms: {
         Row: {
           color: string | null
@@ -278,6 +314,27 @@ export type Database = {
           icon?: string | null
           id?: string
           name?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
         }
         Relationships: []
       }
@@ -320,6 +377,36 @@ export type Database = {
           reward: number
         }[]
       }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
+      my_reward_totals: {
+        Args: never
+        Returns: {
+          credited_count: number
+          failed_count: number
+          first_at: string
+          last_at: string
+          pending_count: number
+          total_earned: number
+          wallet_balance: number
+        }[]
+      }
+      owner_reward_overview: {
+        Args: never
+        Returns: {
+          available_total: number
+          credited_count: number
+          gross_total: number
+          transferred_total: number
+          user_share_total: number
+          users_count: number
+        }[]
+      }
       record_failed_ad_reward: {
         Args: {
           _ad_network?: string
@@ -328,9 +415,29 @@ export type Database = {
         }
         Returns: undefined
       }
+      record_revenue_transfer: {
+        Args: { _amount: number; _network_pct: number; _note?: string }
+        Returns: {
+          amount: number
+          created_at: string
+          created_by: string
+          id: string
+          network_amount: number
+          network_pct: number
+          note: string | null
+          owner_amount: number
+          status: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "revenue_transfers"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "moderator" | "user"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -457,6 +564,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "moderator", "user"],
+    },
   },
 } as const
