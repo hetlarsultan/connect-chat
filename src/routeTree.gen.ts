@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as RulesRouteImport } from './routes/rules'
 import { Route as RewardsRouteImport } from './routes/rewards'
+import { Route as PayoutsRouteImport } from './routes/payouts'
 import { Route as NotificationsRouteImport } from './routes/notifications'
 import { Route as NewsRouteImport } from './routes/news'
 import { Route as MembersRouteImport } from './routes/members'
@@ -33,6 +34,11 @@ const RulesRoute = RulesRouteImport.update({
 const RewardsRoute = RewardsRouteImport.update({
   id: '/rewards',
   path: '/rewards',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PayoutsRoute = PayoutsRouteImport.update({
+  id: '/payouts',
+  path: '/payouts',
   getParentRoute: () => rootRouteImport,
 } as any)
 const NotificationsRoute = NotificationsRouteImport.update({
@@ -109,6 +115,7 @@ export interface FileRoutesByFullPath {
   '/members': typeof MembersRoute
   '/news': typeof NewsRoute
   '/notifications': typeof NotificationsRoute
+  '/payouts': typeof PayoutsRoute
   '/rewards': typeof RewardsRoute
   '/rules': typeof RulesRoute
   '/chat/$roomId': typeof ChatRoomIdRoute
@@ -126,6 +133,7 @@ export interface FileRoutesByTo {
   '/members': typeof MembersRoute
   '/news': typeof NewsRoute
   '/notifications': typeof NotificationsRoute
+  '/payouts': typeof PayoutsRoute
   '/rewards': typeof RewardsRoute
   '/rules': typeof RulesRoute
   '/chat/$roomId': typeof ChatRoomIdRoute
@@ -144,6 +152,7 @@ export interface FileRoutesById {
   '/members': typeof MembersRoute
   '/news': typeof NewsRoute
   '/notifications': typeof NotificationsRoute
+  '/payouts': typeof PayoutsRoute
   '/rewards': typeof RewardsRoute
   '/rules': typeof RulesRoute
   '/chat/$roomId': typeof ChatRoomIdRoute
@@ -163,6 +172,7 @@ export interface FileRouteTypes {
     | '/members'
     | '/news'
     | '/notifications'
+    | '/payouts'
     | '/rewards'
     | '/rules'
     | '/chat/$roomId'
@@ -180,6 +190,7 @@ export interface FileRouteTypes {
     | '/members'
     | '/news'
     | '/notifications'
+    | '/payouts'
     | '/rewards'
     | '/rules'
     | '/chat/$roomId'
@@ -197,6 +208,7 @@ export interface FileRouteTypes {
     | '/members'
     | '/news'
     | '/notifications'
+    | '/payouts'
     | '/rewards'
     | '/rules'
     | '/chat/$roomId'
@@ -215,6 +227,7 @@ export interface RootRouteChildren {
   MembersRoute: typeof MembersRoute
   NewsRoute: typeof NewsRoute
   NotificationsRoute: typeof NotificationsRoute
+  PayoutsRoute: typeof PayoutsRoute
   RewardsRoute: typeof RewardsRoute
   RulesRoute: typeof RulesRoute
   ChatRoomIdRoute: typeof ChatRoomIdRoute
@@ -239,6 +252,13 @@ declare module '@tanstack/react-router' {
       path: '/rewards'
       fullPath: '/rewards'
       preLoaderRoute: typeof RewardsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/payouts': {
+      id: '/payouts'
+      path: '/payouts'
+      fullPath: '/payouts'
+      preLoaderRoute: typeof PayoutsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/notifications': {
@@ -343,6 +363,7 @@ const rootRouteChildren: RootRouteChildren = {
   MembersRoute: MembersRoute,
   NewsRoute: NewsRoute,
   NotificationsRoute: NotificationsRoute,
+  PayoutsRoute: PayoutsRoute,
   RewardsRoute: RewardsRoute,
   RulesRoute: RulesRoute,
   ChatRoomIdRoute: ChatRoomIdRoute,
