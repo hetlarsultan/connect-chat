@@ -12,6 +12,10 @@ import {
   Search,
   Download,
   RefreshCw,
+  Coins,
+  Banknote,
+  Radio,
+  Copy,
 } from "lucide-react";
 import { AppShell, PageHeader } from "@/components/AppShell";
 import { supabase } from "@/integrations/supabase/client";
@@ -252,6 +256,7 @@ function EarnPage() {
     return () => clearInterval(t);
   }, [user, hasPending, autoRefresh, refreshSecs, load]);
 
+  const adUnitId = (import.meta.env["VITE_REWARDED_AD_UNIT_ID"] as string | undefined) || null;
   const locked = busy || waiting;
 
   const watch = async () => {
@@ -441,6 +446,42 @@ function EarnPage() {
             مشاهدة الإعلان اختيارية بالكامل، وتتوفر عند تشغيل التطبيق على جهاز يدعم إعلانات المكافأة.
           </p>
         )}
+
+        {/* ---- إعداد شبكة الإعلانات ---- */}
+        <div className="p-4 rounded-2xl bg-surface border border-border space-y-2">
+          <h3 className="text-xs font-bold flex items-center gap-2">
+            <Radio className="size-4 text-primary" /> إعداد شبكة الإعلانات
+          </h3>
+          <div className="flex items-center justify-between gap-2 text-[11px]">
+            <span className="text-muted-foreground">معرّف وحدة الإعلان</span>
+            <span className={adUnitId ? "font-bold tabular-nums truncate" : "text-red-400 font-bold"}>
+              {adUnitId ?? "غير مضبوط بعد"}
+            </span>
+          </div>
+          <div className="text-[11px] space-y-1">
+            <span className="text-muted-foreground">رابط التحقق من المشاهدة (SSV) لإدخاله في لوحة الشبكة</span>
+            <div className="flex items-center gap-2">
+              <code className="flex-1 px-2 py-1.5 rounded-xl bg-background border border-border text-[10px] truncate">
+                {ssvUrl}
+              </code>
+              <button
+                type="button"
+                onClick={() => {
+                  void navigator.clipboard?.writeText(ssvUrl);
+                  toast.success("تم نسخ رابط التحقق.");
+                }}
+                className="p-2 rounded-xl bg-primary/15"
+                aria-label="نسخ رابط التحقق"
+              >
+                <Copy className="size-3.5" />
+              </button>
+            </div>
+          </div>
+          <p className="text-[10px] text-muted-foreground/80 leading-relaxed">
+            بعد إدخال الرابط في لوحة شبكة الإعلانات وضبط معرّف وحدة الإعلان، أوقف وضع الاختبار وشاهد إعلاناً حقيقياً؛
+            ستنتقل العملية من «قيد المراجعة» إلى ناجح تلقائياً عند وصول التحقق.
+          </p>
+        </div>
 
         {/* ---- وضع الاختبار (Mock) ---- */}
         <div className="p-4 rounded-2xl bg-surface border border-border space-y-3">
