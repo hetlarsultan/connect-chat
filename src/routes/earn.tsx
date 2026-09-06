@@ -148,13 +148,34 @@ function EarnPage() {
   const [recheckId, setRecheckId] = useState<string | null>(null);
   const [autoRefresh, setAutoRefresh] = useState(true);
   const [refreshSecs, setRefreshSecs] = useState(10);
+  const [isOwner, setIsOwner] = useState(false);
+  const [ssvUrl, setSsvUrl] = useState("");
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const lockRef = useRef(false);
 
   useEffect(() => {
     setMock(isMockMode());
     setRefreshSecs(loadRefreshSecs());
+    setSsvUrl(`${window.location.origin}/api/public/ads/ssv`);
   }, []);
+
+  /* هل هذا الحساب مالك التطبيق؟ (لعرض واجهة سحب الأرباح) */
+  useEffect(() => {
+    if (!user) return;
+    let alive = true;
+    void supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", user.id)
+      .eq("role", "admin")
+      .maybeSingle()
+      .then(({ data }) => {
+        if (alive) setIsOwner(Boolean(data));
+      });
+    return () => {
+      alive = false;
+    };
+  }, [user]);
 
 
   const load = useCallback(async () => {
