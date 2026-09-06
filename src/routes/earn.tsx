@@ -113,7 +113,7 @@ function statusDetail(t: { verification_status: string; credit_status: string })
   return "لم تصل استجابة التحقق (SSV) من شبكة الإعلانات بعد. يمكنك إعادة محاولة جلب الحالة دون إعادة تشغيل الإعلان.";
 }
 
-function toCsv(rows: Txn[]): string {
+function toCsv(rows: (Txn & { mock?: boolean })[]): string {
   const esc = (v: string) => `"${v.replace(/"/g, '""')}"`;
   const head = ["transaction_id", "occurred_at", "status", "reason"].map(esc).join(",");
   const body = rows.map((t) =>
@@ -378,7 +378,7 @@ function EarnPage() {
 
   const downloadCsv = () => {
     /* في وضع الاختبار تُدرج العمليات التجريبية أيضاً حتى يمكن تجربة التنزيل بالكامل. */
-    const mockRows: Txn[] = mock
+    const mockRows: (Txn & { mock: true })[] = mock
       ? mockTxns.map((m) => ({
           id: m.id,
           transaction_id: m.transaction_id,
@@ -387,9 +387,10 @@ function EarnPage() {
           credit_status: "not_credited",
           occurred_at: m.occurred_at,
           notified_at: null,
+          mock: true as const,
         }))
       : [];
-    const rowsForCsv = [...filtered, ...mockRows];
+    const rowsForCsv: (Txn & { mock?: boolean })[] = [...filtered, ...mockRows];
     if (!rowsForCsv.length) {
       toast.info("لا توجد عمليات لتنزيلها.");
       return;
