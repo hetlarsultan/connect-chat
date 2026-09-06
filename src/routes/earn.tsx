@@ -402,6 +402,23 @@ function EarnPage() {
           </p>
         </div>
 
+        <div className={`grid gap-2 ${isOwner ? "grid-cols-2" : "grid-cols-1"}`}>
+          <Link
+            to="/rewards"
+            className="flex items-center justify-center gap-1.5 py-3 rounded-2xl bg-surface border border-border text-xs font-bold"
+          >
+            <Coins className="size-4 text-primary" /> مكافآتي المتراكمة
+          </Link>
+          {isOwner && (
+            <Link
+              to="/payouts"
+              className="flex items-center justify-center gap-1.5 py-3 rounded-2xl bg-surface border border-border text-xs font-bold"
+            >
+              <Banknote className="size-4 text-primary" /> سحب الأرباح
+            </Link>
+          )}
+        </div>
+
         <button
           type="button"
           onClick={() => void (mock ? runMock("verified") : watch())}
