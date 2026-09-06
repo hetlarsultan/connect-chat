@@ -61,8 +61,9 @@ type MockTxn = {
   occurred_at: string;
 };
 
-function StatusPill({ verification, credit }: { verification: string; credit: string }) {
-  const credited = credit === "credited";
+function StatusPill({ verification, credit, mock = false }: { verification: string; credit: string; mock?: boolean }) {
+  const mockVerified = mock && verification === "verified";
+  const credited = credit === "credited" || mockVerified;
   const failed = verification === "failed" || verification === "cancelled";
   const Icon = credited ? ShieldCheck : failed ? ShieldAlert : Clock;
   const cls = credited
@@ -70,13 +71,15 @@ function StatusPill({ verification, credit }: { verification: string; credit: st
     : failed
       ? "text-red-400"
       : "text-muted-foreground";
-  const label = credited
-    ? "تم التحقق وأُضيفت المكافأة"
-    : verification === "cancelled"
-      ? "أُلغي الإعلان — بدون رصيد"
-      : verification === "failed"
-        ? "فشل التحقق — بدون رصيد"
-        : "قيد التحقق (SSV)";
+  const label = mockVerified
+    ? "نجح التحقق (تجريبي) — بدون رصيد"
+    : credited
+      ? "تم التحقق وأُضيفت المكافأة"
+      : verification === "cancelled"
+        ? "أُلغي الإعلان — بدون رصيد"
+        : verification === "failed"
+          ? "فشل التحقق — بدون رصيد"
+          : "قيد التحقق (SSV)";
   return (
     <span className={`flex items-center gap-1 font-semibold ${cls}`}>
       <Icon className="size-3.5" />
@@ -374,11 +377,24 @@ function EarnPage() {
   };
 
   const downloadCsv = () => {
-    if (!filtered.length) {
+    /* في وضع الاختبار تُدرج العمليات التجريبية أيضاً حتى يمكن تجربة التنزيل بالكامل. */
+    const mockRows: Txn[] = mock
+      ? mockTxns.map((m) => ({
+          id: m.id,
+          transaction_id: m.transaction_id,
+          reward_amount: 0,
+          verification_status: m.verification_status,
+          credit_status: "not_credited",
+          occurred_at: m.occurred_at,
+          notified_at: null,
+        }))
+      : [];
+    const rowsForCsv = [...filtered, ...mockRows];
+    if (!rowsForCsv.length) {
       toast.info("لا توجد عمليات لتنزيلها.");
       return;
     }
-    const blob = new Blob(["\ufeff" + toCsv(filtered)], { type: "text/csv;charset=utf-8" });
+    const blob = new Blob(["\ufeff" + toCsv(rowsForCsv)], { type: "text/csv;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
@@ -535,7 +551,7 @@ function EarnPage() {
               {mockTxns.map((m) => (
                 <div key={m.id} className="text-[11px] flex items-center justify-between gap-2">
                   <span className="truncate text-muted-foreground/80">{m.transaction_id}</span>
-                  <StatusPill verification={m.verification_status} credit="not_credited" />
+                  <StatusPill verification={m.verification_status} credit="not_credited" mock />
                 </div>
               ))}
             </div>
