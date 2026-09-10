@@ -10,6 +10,8 @@
  * database, the wallet, or any user data.
  */
 
+import { REWARDED_AD_UNIT_ID } from "@/config/ads";
+
 type AdMobBridge = {
   prepareRewardVideoAd?: (opts: { adId: string; ssv?: { userId: string; customData?: string } }) => Promise<unknown>;
   showRewardVideoAd?: () => Promise<unknown>;
