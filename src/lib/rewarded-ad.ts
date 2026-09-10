@@ -63,7 +63,7 @@ export async function runMockFlow(outcome: MockOutcome): Promise<{ result: ShowR
 /** Plays the rewarded ad, passing the user id + transaction id to the network for SSV. */
 export async function showRewardedAd(userId: string, transactionId: string): Promise<ShowResult> {
   const bridge = getBridge();
-  const adId = import.meta.env["VITE_REWARDED_AD_UNIT_ID"] as string | undefined;
+  const adId = REWARDED_AD_UNIT_ID;
   if (!bridge?.showRewardVideoAd || !adId) {
     return { shown: false, reason: "unavailable" };
   }
