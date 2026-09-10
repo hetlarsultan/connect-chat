@@ -18,6 +18,7 @@ import {
   Copy,
 } from "lucide-react";
 import { AppShell, PageHeader } from "@/components/AppShell";
+import { REWARDED_AD_UNIT_ID, SSV_CALLBACK_URL } from "@/config/ads";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/use-auth";
 import {
@@ -163,7 +164,7 @@ function EarnPage() {
   useEffect(() => {
     setMock(isMockMode());
     setRefreshSecs(loadRefreshSecs());
-    setSsvUrl(`${window.location.origin}/api/public/ads/ssv`);
+    setSsvUrl(SSV_CALLBACK_URL);
   }, []);
 
   /* هل هذا الحساب مالك التطبيق؟ (لعرض واجهة سحب الأرباح) */
@@ -259,7 +260,7 @@ function EarnPage() {
     return () => clearInterval(t);
   }, [user, hasPending, autoRefresh, refreshSecs, load]);
 
-  const adUnitId = (import.meta.env["VITE_REWARDED_AD_UNIT_ID"] as string | undefined) || null;
+  const adUnitId = REWARDED_AD_UNIT_ID || null;
   const locked = busy || waiting;
 
   const watch = async () => {

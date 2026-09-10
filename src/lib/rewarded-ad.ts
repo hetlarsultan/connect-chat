@@ -10,6 +10,8 @@
  * database, the wallet, or any user data.
  */
 
+import { REWARDED_AD_UNIT_ID } from "@/config/ads";
+
 type AdMobBridge = {
   prepareRewardVideoAd?: (opts: { adId: string; ssv?: { userId: string; customData?: string } }) => Promise<unknown>;
   showRewardVideoAd?: () => Promise<unknown>;
@@ -22,7 +24,7 @@ function getBridge(): AdMobBridge | null {
 
 export function isRewardedAdAvailable(): boolean {
   const bridge = getBridge();
-  return Boolean(bridge?.showRewardVideoAd && import.meta.env["VITE_REWARDED_AD_UNIT_ID"]);
+  return Boolean(bridge?.showRewardVideoAd && REWARDED_AD_UNIT_ID);
 }
 
 /* ------------------------------ mock mode ------------------------------ */
@@ -61,7 +63,7 @@ export async function runMockFlow(outcome: MockOutcome): Promise<{ result: ShowR
 /** Plays the rewarded ad, passing the user id + transaction id to the network for SSV. */
 export async function showRewardedAd(userId: string, transactionId: string): Promise<ShowResult> {
   const bridge = getBridge();
-  const adId = import.meta.env["VITE_REWARDED_AD_UNIT_ID"] as string | undefined;
+  const adId = REWARDED_AD_UNIT_ID;
   if (!bridge?.showRewardVideoAd || !adId) {
     return { shown: false, reason: "unavailable" };
   }
