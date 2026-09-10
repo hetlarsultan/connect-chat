@@ -259,7 +259,7 @@ function EarnPage() {
     return () => clearInterval(t);
   }, [user, hasPending, autoRefresh, refreshSecs, load]);
 
-  const adUnitId = (import.meta.env["VITE_REWARDED_AD_UNIT_ID"] as string | undefined) || null;
+  const adUnitId = REWARDED_AD_UNIT_ID || null;
   const locked = busy || waiting;
 
   const watch = async () => {
