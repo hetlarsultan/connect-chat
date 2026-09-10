@@ -98,8 +98,15 @@ async function handle(request: Request): Promise<Response> {
   const signature = params.get("signature");
   const keyId = params.get("key_id");
   const adNetwork = params.get("ad_network") ?? "admob";
+  const adUnit = params.get("ad_unit");
 
   if (!transactionId || !userId) return new Response("missing params", { status: 400 });
+
+  // The callback must come from this app's own rewarded ad unit.
+  const expectedUnit = REWARDED_AD_UNIT_ID.split("/").pop();
+  if (adUnit && expectedUnit && adUnit !== expectedUnit && adUnit !== REWARDED_AD_UNIT_ID) {
+    return new Response("unexpected ad unit", { status: 401 });
+  }
 
   const sigIndex = rawQuery.indexOf("&signature=");
   const message = sigIndex >= 0 ? rawQuery.slice(0, sigIndex) : "";
