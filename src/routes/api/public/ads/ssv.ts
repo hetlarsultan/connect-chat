@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { REWARDED_AD_UNIT_ID } from "@/config/ads";
 
 /**
  * Rewarded-ad Server-Side Verification (SSV) callback.
