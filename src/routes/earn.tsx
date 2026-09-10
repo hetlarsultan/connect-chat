@@ -163,7 +163,7 @@ function EarnPage() {
   useEffect(() => {
     setMock(isMockMode());
     setRefreshSecs(loadRefreshSecs());
-    setSsvUrl(`${window.location.origin}/api/public/ads/ssv`);
+    setSsvUrl(SSV_CALLBACK_URL);
   }, []);
 
   /* هل هذا الحساب مالك التطبيق؟ (لعرض واجهة سحب الأرباح) */
