@@ -24,7 +24,7 @@ function getBridge(): AdMobBridge | null {
 
 export function isRewardedAdAvailable(): boolean {
   const bridge = getBridge();
-  return Boolean(bridge?.showRewardVideoAd && import.meta.env["VITE_REWARDED_AD_UNIT_ID"]);
+  return Boolean(bridge?.showRewardVideoAd && REWARDED_AD_UNIT_ID);
 }
 
 /* ------------------------------ mock mode ------------------------------ */
