@@ -170,6 +170,21 @@ export type Database = {
           },
         ]
       }
+      owner_emails: {
+        Row: {
+          created_at: string
+          email: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+        }
+        Relationships: []
+      }
       private_messages: {
         Row: {
           content: string
@@ -364,6 +379,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      claim_owner_role: { Args: never; Returns: boolean }
       cleanup_expired_data: { Args: never; Returns: undefined }
       credit_ad_reward: {
         Args: {
@@ -394,6 +410,20 @@ export type Database = {
           pending_count: number
           total_earned: number
           wallet_balance: number
+        }[]
+      }
+      owner_ads_stats: {
+        Args: never
+        Returns: {
+          available_total: number
+          failed_count: number
+          gross_total: number
+          pending_count: number
+          total_count: number
+          transferred_total: number
+          user_share_total: number
+          verification_rate: number
+          verified_count: number
         }[]
       }
       owner_reward_overview: {

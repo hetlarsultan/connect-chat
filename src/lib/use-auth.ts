@@ -110,6 +110,11 @@ function init() {
       "requestIdleCallback" in window
         ? (window as unknown as { requestIdleCallback: (c: () => void) => void }).requestIdleCallback(cb)
         : setTimeout(cb, 1200);
+    // Grants the app owner role when the signed-in email is the configured
+    // owner. The email check happens server-side; the client cannot fake it.
+    idle(() => {
+      void supabase.rpc("claim_owner_role");
+    });
     idle(() => {
       void supabase
         .from("profiles")
