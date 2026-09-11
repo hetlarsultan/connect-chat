@@ -18,6 +18,7 @@ import { Route as MembersRouteImport } from './routes/members'
 import { Route as EarnRouteImport } from './routes/earn'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AudioRouteImport } from './routes/audio'
+import { Route as AdsAdminRouteImport } from './routes/ads-admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ProfileIndexRouteImport } from './routes/profile.index'
 import { Route as MessagesIndexRouteImport } from './routes/messages.index'
@@ -71,6 +72,11 @@ const AudioRoute = AudioRouteImport.update({
   path: '/audio',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdsAdminRoute = AdsAdminRouteImport.update({
+  id: '/ads-admin',
+  path: '/ads-admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -109,6 +115,7 @@ const ApiPublicAdsSsvRoute = ApiPublicAdsSsvRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/ads-admin': typeof AdsAdminRoute
   '/audio': typeof AudioRoute
   '/auth': typeof AuthRoute
   '/earn': typeof EarnRoute
@@ -127,6 +134,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/ads-admin': typeof AdsAdminRoute
   '/audio': typeof AudioRoute
   '/auth': typeof AuthRoute
   '/earn': typeof EarnRoute
@@ -146,6 +154,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/ads-admin': typeof AdsAdminRoute
   '/audio': typeof AudioRoute
   '/auth': typeof AuthRoute
   '/earn': typeof EarnRoute
@@ -166,6 +175,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/ads-admin'
     | '/audio'
     | '/auth'
     | '/earn'
@@ -184,6 +194,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/ads-admin'
     | '/audio'
     | '/auth'
     | '/earn'
@@ -202,6 +213,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/ads-admin'
     | '/audio'
     | '/auth'
     | '/earn'
@@ -221,6 +233,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AdsAdminRoute: typeof AdsAdminRoute
   AudioRoute: typeof AudioRoute
   AuthRoute: typeof AuthRoute
   EarnRoute: typeof EarnRoute
@@ -303,6 +316,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AudioRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/ads-admin': {
+      id: '/ads-admin'
+      path: '/ads-admin'
+      fullPath: '/ads-admin'
+      preLoaderRoute: typeof AdsAdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -357,6 +377,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AdsAdminRoute: AdsAdminRoute,
   AudioRoute: AudioRoute,
   AuthRoute: AuthRoute,
   EarnRoute: EarnRoute,
