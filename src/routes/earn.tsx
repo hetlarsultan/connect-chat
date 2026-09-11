@@ -434,10 +434,10 @@ function EarnPage() {
           </Link>
           {isOwner && (
             <Link
-              to="/payouts"
+              to="/ads-admin"
               className="flex items-center justify-center gap-1.5 py-3 rounded-2xl bg-surface border border-border text-xs font-bold"
             >
-              <Banknote className="size-4 text-primary" /> سحب الأرباح
+              <Banknote className="size-4 text-primary" /> لوحة الإعلانات
             </Link>
           )}
         </div>
