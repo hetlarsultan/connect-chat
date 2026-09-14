@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      ad_error_logs: {
+        Row: {
+          ad_unit_id: string | null
+          created_at: string
+          id: string
+          message: string | null
+          stage: string
+          user_id: string | null
+        }
+        Insert: {
+          ad_unit_id?: string | null
+          created_at?: string
+          id?: string
+          message?: string | null
+          stage: string
+          user_id?: string | null
+        }
+        Update: {
+          ad_unit_id?: string | null
+          created_at?: string
+          id?: string
+          message?: string | null
+          stage?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       ad_reward_transactions: {
         Row: {
           ad_network: string
@@ -53,6 +80,36 @@ export type Database = {
           updated_at?: string
           user_id?: string
           verification_status?: string
+        }
+        Relationships: []
+      }
+      ad_settings: {
+        Row: {
+          ads_enabled: boolean
+          created_at: string
+          id: boolean
+          rewarded_ad_unit_id: string | null
+          rewarded_enabled: boolean
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          ads_enabled?: boolean
+          created_at?: string
+          id?: boolean
+          rewarded_ad_unit_id?: string | null
+          rewarded_enabled?: boolean
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          ads_enabled?: boolean
+          created_at?: string
+          id?: boolean
+          rewarded_ad_unit_id?: string | null
+          rewarded_enabled?: boolean
+          updated_at?: string
+          updated_by?: string | null
         }
         Relationships: []
       }
