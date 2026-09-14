@@ -95,13 +95,34 @@ async function handle(request: Request): Promise<Response> {
   const params = url.searchParams;
 
   const transactionId = params.get("transaction_id");
-  const userId = params.get("user_id");
+  const customData = params.get("custom_data");
   const signature = params.get("signature");
   const keyId = params.get("key_id");
   const adNetwork = params.get("ad_network") ?? "admob";
   const adUnit = params.get("ad_unit");
 
-  if (!transactionId || !userId) return new Response("missing params", { status: 400 });
+  // AdMob's "Verify URL" probe sends no (or partial) parameters and expects 200.
+  // No reward is granted on this path.
+  if (!signature || !keyId) {
+    return new Response("ok", { status: 200 });
+  }
+
+  const sigIndex = rawQuery.indexOf("&signature=");
+  const message = sigIndex >= 0 ? rawQuery.slice(0, sigIndex) : "";
+
+  let signatureOk = false;
+  if (message) {
+    try {
+      signatureOk = await verifySignature(message, signature, keyId);
+    } catch {
+      signatureOk = false;
+    }
+  }
+  if (!signatureOk) return new Response("unverified", { status: 401 });
+
+  // Verified probe from the AdMob console (no transaction to credit).
+  const lookupId = transactionId ?? customData;
+  if (!lookupId) return new Response("ok", { status: 200 });
 
   // The callback must come from this app's own rewarded ad unit.
   const expectedUnit = REWARDED_AD_UNIT_ID.split("/").pop();
@@ -109,37 +130,30 @@ async function handle(request: Request): Promise<Response> {
     return new Response("unexpected ad unit", { status: 401 });
   }
 
-  const sigIndex = rawQuery.indexOf("&signature=");
-  const message = sigIndex >= 0 ? rawQuery.slice(0, sigIndex) : "";
-
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
   // The view must have been started by this signed-in user (own choice to watch).
   const { data: viewRequest } = await supabaseAdmin
     .from("ad_view_requests")
     .select("user_id")
-    .eq("transaction_id", transactionId)
+    .eq("transaction_id", lookupId)
     .maybeSingle();
 
-  let ok = false;
-  if (signature && keyId && message) {
-    try {
-      ok = await verifySignature(message, signature, keyId);
-    } catch {
-      ok = false;
-    }
-  }
+  // user_id is optional in the callback; fall back to the recorded request owner.
+  const claimedUserId = params.get("user_id");
+  const userId = viewRequest?.user_id ?? null;
 
-  if (!ok || !viewRequest || viewRequest.user_id !== userId) {
+  if (!userId || (claimedUserId && claimedUserId !== userId)) {
     if (viewRequest) {
       await supabaseAdmin.rpc("record_failed_ad_reward", {
         _user_id: viewRequest.user_id,
-        _transaction_id: transactionId,
+        _transaction_id: lookupId,
         _ad_network: adNetwork,
       });
     }
-    return new Response("unverified", { status: 401 });
+    return new Response("unknown transaction", { status: 200 });
   }
+
 
   // Gross value approved by the app's own earnings config — never the network payout
   // itself, and never exposed to the client. The user's share is 25% (in SQL).
@@ -147,7 +161,7 @@ async function handle(request: Request): Promise<Response> {
 
   const { error } = await supabaseAdmin.rpc("credit_ad_reward", {
     _user_id: userId,
-    _transaction_id: transactionId,
+    _transaction_id: lookupId,
     _gross_value: grossValue,
     _ad_network: adNetwork,
   });
