@@ -101,9 +101,10 @@ async function handle(request: Request): Promise<Response> {
   const adNetwork = params.get("ad_network") ?? "admob";
   const adUnit = params.get("ad_unit");
 
-  // AdMob's "Verify URL" probe sends no (or partial) parameters and expects 200.
-  // No reward is granted on this path.
-  if (!signature || !keyId) {
+  // Nothing to credit => this is a probe (AdMob's "Verify URL" check). Answer 200
+  // so the console accepts the endpoint. No reward is granted on this path.
+  const lookupId = transactionId ?? customData;
+  if (!lookupId || !signature || !keyId) {
     return new Response("ok", { status: 200 });
   }
 
@@ -118,11 +119,9 @@ async function handle(request: Request): Promise<Response> {
       signatureOk = false;
     }
   }
+  // A real reward callback with a bad signature is rejected and never credited.
   if (!signatureOk) return new Response("unverified", { status: 401 });
 
-  // Verified probe from the AdMob console (no transaction to credit).
-  const lookupId = transactionId ?? customData;
-  if (!lookupId) return new Response("ok", { status: 200 });
 
   // The callback must come from this app's own rewarded ad unit.
   const expectedUnit = REWARDED_AD_UNIT_ID.split("/").pop();
