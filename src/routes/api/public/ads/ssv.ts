@@ -161,7 +161,7 @@ async function handle(request: Request): Promise<Response> {
 
   const { error } = await supabaseAdmin.rpc("credit_ad_reward", {
     _user_id: userId,
-    _transaction_id: transactionId,
+    _transaction_id: lookupId,
     _gross_value: grossValue,
     _ad_network: adNetwork,
   });
