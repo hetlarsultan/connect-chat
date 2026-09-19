@@ -266,11 +266,21 @@ function EarnPage() {
     return () => clearInterval(t);
   }, [user, hasPending, autoRefresh, refreshSecs, load]);
 
-  const adUnitId = REWARDED_AD_UNIT_ID || null;
+  const adUnitId = adSettings?.rewarded_ad_unit_id ?? null;
+  const adsEnabled = adSettings ? adSettings.ads_enabled && adSettings.rewarded_enabled : false;
   const locked = busy || waiting;
 
   const watch = async () => {
     if (!user || lockRef.current || locked) return;
+    if (!adsEnabled) {
+      toast.error("الإعلانات غير مفعّلة حالياً من إدارة التطبيق.");
+      return;
+    }
+    if (!adUnitId) {
+      toast.error("لم يتم ضبط معرّف الوحدة الإعلانية بعد، لذلك لا يمكن تحميل الإعلان.");
+      void logAdError({ userId: user.id, adUnitId: null, stage: "missing-ad-unit" });
+      return;
+    }
     lockRef.current = true;
     setBusy(true);
     try {
@@ -281,22 +291,38 @@ function EarnPage() {
       });
       if (error) throw error;
 
-      const res = await showRewardedAd(user.id, transactionId);
+      const res = await showRewardedAd(user.id, transactionId, adUnitId);
       if (!res.shown) {
         toast.error(
           res.reason === "unavailable"
             ? "الإعلانات غير متاحة على هذا الجهاز حالياً."
             : res.reason === "cancelled"
               ? "تم إلغاء الإعلان قبل إكماله، لذلك لم يُضف أي رصيد."
-              : "تعذّر تشغيل الإعلان، ولم يُضف أي رصيد.",
+              : res.reason === "invalid-ad-unit"
+                ? "معرّف الوحدة الإعلانية غير صالح، راجع إعدادات الإعلانات."
+                : res.reason === "no-ad-unit"
+                  ? "لم يتم ضبط معرّف الوحدة الإعلانية بعد."
+                  : "تعذّر تشغيل الإعلان، ولم يُضف أي رصيد.",
         );
+        void logAdError({
+          userId: user.id,
+          adUnitId,
+          stage: res.reason ?? "failed",
+          message: res.message,
+        });
         return;
       }
       setWaiting(true);
       toast.info("جاري التحقق من المشاهدة...");
       void load();
-    } catch {
+    } catch (e) {
       toast.error("تعذّر بدء العملية، حاول لاحقاً.");
+      void logAdError({
+        userId: user.id,
+        adUnitId,
+        stage: "start-failed",
+        message: e instanceof Error ? e.message : String(e),
+      });
     } finally {
       setBusy(false);
       lockRef.current = false;
