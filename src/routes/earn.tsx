@@ -159,6 +159,7 @@ function EarnPage() {
   const [refreshSecs, setRefreshSecs] = useState(10);
   const [isOwner, setIsOwner] = useState(false);
   const [ssvUrl, setSsvUrl] = useState("");
+  const [adSettings, setAdSettings] = useState<AdSettings | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const lockRef = useRef(false);
 
@@ -166,6 +167,10 @@ function EarnPage() {
     setMock(isMockMode());
     setRefreshSecs(loadRefreshSecs());
     setSsvUrl(SSV_CALLBACK_URL);
+    setAdSettings(cachedAdSettings());
+    void fetchAdSettings(true).then((s) => {
+      if (s) setAdSettings(s);
+    });
   }, []);
 
   /* هل هذا الحساب مالك التطبيق؟ (لعرض واجهة سحب الأرباح) */
