@@ -491,7 +491,7 @@ function EarnPage() {
           </p>
         )}
 
-        {!isRewardedAdAvailable() && !mock && (
+        {!isRewardedAdAvailable(adUnitId) && !mock && (
           <p className="text-[11px] text-muted-foreground text-center">
             مشاهدة الإعلان اختيارية بالكامل، وتتوفر عند تشغيل التطبيق على جهاز يدعم إعلانات المكافأة.
           </p>
@@ -505,7 +505,13 @@ function EarnPage() {
           <div className="flex items-center justify-between gap-2 text-[11px]">
             <span className="text-muted-foreground">معرّف وحدة الإعلان</span>
             <span className={adUnitId ? "font-bold tabular-nums truncate" : "text-red-400 font-bold"}>
-              {adUnitId ?? "غير مضبوط بعد"}
+              {adUnitId ? maskAdUnitId(adUnitId) : "غير مضبوط بعد"}
+            </span>
+          </div>
+          <div className="flex items-center justify-between gap-2 text-[11px]">
+            <span className="text-muted-foreground">الإعلانات</span>
+            <span className={adsEnabled ? "font-bold text-emerald-400" : "font-bold text-red-400"}>
+              {adsEnabled ? "مفعّلة" : "غير مفعّلة"}
             </span>
           </div>
           <div className="text-[11px] space-y-1">
