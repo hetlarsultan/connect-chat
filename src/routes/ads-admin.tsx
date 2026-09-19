@@ -295,6 +295,10 @@ function AdsAdminPage() {
               )}
             </div>
 
+            {/* ---- إعدادات الإعلانات (المالك فقط) ---- */}
+            <AdSettingsSection userId={user?.id ?? null} />
+
+
             {/* ---- سجل السحب ---- */}
             <div className="space-y-2">
               <h3 className="text-xs font-bold">آخر عمليات السحب</h3>
