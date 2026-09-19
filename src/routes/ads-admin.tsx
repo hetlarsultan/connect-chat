@@ -10,11 +10,14 @@ import {
   Percent,
   RefreshCw,
   ShieldCheck,
+  Settings2,
   XCircle,
 } from "lucide-react";
 import { AppShell, PageHeader } from "@/components/AppShell";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/use-auth";
+import { fetchAdSettings, saveAdSettings, type AdSettings } from "@/lib/ad-settings";
+import { isValidAdUnitId, maskAdUnitId } from "@/config/ads";
 
 export const Route = createFileRoute("/ads-admin")({
   head: () => ({
@@ -333,5 +336,137 @@ function AdsAdminPage() {
         )}
       </div>
     </AppShell>
+  );
+}
+
+/* ------------------------------------------------------------------ *
+ * إعدادات الإعلانات — تظهر وتُعدّل من حساب المالك فقط. المعرّف يُحفظ
+ * في إعدادات التطبيق (قاعدة البيانات) ويُستخدم فوراً في طلب الإعلان
+ * التالي دون تعديل الكود. إعدادات التحقق SSV منفصلة ولم تتغيّر.
+ * ------------------------------------------------------------------ */
+
+function AdSettingsSection({ userId }: { userId: string | null }) {
+  const [unitId, setUnitId] = useState("");
+  const [adsOn, setAdsOn] = useState(true);
+  const [rewardedOn, setRewardedOn] = useState(true);
+  const [saved, setSaved] = useState<AdSettings | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [loaded, setLoaded] = useState(false);
+
+  useEffect(() => {
+    void fetchAdSettings(true).then((s) => {
+      if (s) {
+        setSaved(s);
+        setUnitId(s.rewarded_ad_unit_id ?? "");
+        setAdsOn(s.ads_enabled);
+        setRewardedOn(s.rewarded_enabled);
+      }
+      setLoaded(true);
+    });
+  }, []);
+
+  const valid = unitId.trim() === "" || isValidAdUnitId(unitId);
+
+  const save = async () => {
+    if (!userId || saving) return;
+    if (!isValidAdUnitId(unitId)) {
+      toast.error("صيغة معرّف الوحدة الإعلانية غير صحيحة. المثال: ca-app-pub-0000000000000000/0000000000");
+      return;
+    }
+    setSaving(true);
+    const res = await saveAdSettings({
+      rewarded_ad_unit_id: unitId.trim(),
+      ads_enabled: adsOn,
+      rewarded_enabled: rewardedOn,
+      userId,
+    });
+    setSaving(false);
+    if (!res.ok) {
+      toast.error(
+        res.reason === "invalid"
+          ? "معرّف الوحدة الإعلانية غير صالح."
+          : "لا تملك صلاحية تعديل إعدادات الإعلانات.",
+      );
+      return;
+    }
+    const fresh = await fetchAdSettings(true);
+    if (fresh) setSaved(fresh);
+    toast.success("تم حفظ معرّف الوحدة الإعلانية وتفعيلها. سيُستخدم في طلبات الإعلان التالية.");
+  };
+
+  return (
+    <div className="p-4 rounded-2xl bg-surface border border-border space-y-3">
+      <h3 className="text-sm font-bold flex items-center gap-2">
+        <Settings2 className="size-4 text-primary" /> إعدادات الإعلانات
+      </h3>
+
+      {/* حالة النظام */}
+      <div className="grid grid-cols-1 gap-1.5 text-[11px]">
+        <div className="flex items-center justify-between">
+          <span className="text-muted-foreground">AdMob</span>
+          <span className={saved?.ads_enabled && saved?.rewarded_ad_unit_id ? "font-bold text-emerald-400" : "font-bold text-red-400"}>
+            {saved?.ads_enabled && saved?.rewarded_ad_unit_id ? "مفعّل" : "غير مفعّل"}
+          </span>
+        </div>
+        <div className="flex items-center justify-between">
+          <span className="text-muted-foreground">Ad Unit ID</span>
+          <span className="font-bold tabular-nums">{maskAdUnitId(saved?.rewarded_ad_unit_id)}</span>
+        </div>
+        <div className="flex items-center justify-between">
+          <span className="text-muted-foreground">Rewarded Ads</span>
+          <span className={saved?.rewarded_enabled ? "font-bold text-emerald-400" : "font-bold text-red-400"}>
+            {saved?.rewarded_enabled ? "مفعّلة" : "غير مفعّلة"}
+          </span>
+        </div>
+      </div>
+
+      <label className="block text-[11px] text-muted-foreground space-y-1">
+        <span>معرّف الوحدة الإعلانية AdMob</span>
+        <input
+          value={unitId}
+          onChange={(e) => setUnitId(e.target.value)}
+          dir="ltr"
+          placeholder="ca-app-pub-0000000000000000/0000000000"
+          className={`w-full px-3 py-2 rounded-xl bg-background border text-sm outline-none focus:border-primary ${
+            valid ? "border-border" : "border-red-400"
+          }`}
+        />
+      </label>
+      {!valid && <p className="text-[10px] text-red-400">صيغة المعرّف غير صحيحة.</p>}
+
+      <label className="flex items-center justify-between gap-2 text-xs font-bold">
+        <span>الإعلانات مفعّلة</span>
+        <input
+          type="checkbox"
+          checked={adsOn}
+          onChange={(e) => setAdsOn(e.target.checked)}
+          className="size-4 accent-[hsl(var(--primary))]"
+        />
+      </label>
+      <label className="flex items-center justify-between gap-2 text-xs font-bold">
+        <span>إعلانات المكافأة مفعّلة</span>
+        <input
+          type="checkbox"
+          checked={rewardedOn}
+          onChange={(e) => setRewardedOn(e.target.checked)}
+          className="size-4 accent-[hsl(var(--primary))]"
+        />
+      </label>
+
+      <button
+        type="button"
+        onClick={() => void save()}
+        disabled={saving || !loaded || !valid}
+        className="w-full py-3 rounded-2xl gradient-brand text-white text-sm font-bold disabled:opacity-50 flex items-center justify-center gap-2"
+      >
+        {saving ? <Loader2 className="size-4 animate-spin" /> : <Settings2 className="size-4" />}
+        حفظ وتفعيل
+      </button>
+
+      <p className="text-[10px] text-muted-foreground/80 leading-relaxed">
+        هذه الإعدادات متاحة لمالك التطبيق فقط، ولا يستطيع أي مستخدم عادي تغييرها. رابط التحقق من المشاهدة (SSV) منفصل
+        تماماً ولم يتغيّر.
+      </p>
+    </div>
   );
 }
