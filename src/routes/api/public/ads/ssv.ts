@@ -1,5 +1,4 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { REWARDED_AD_UNIT_ID } from "@/config/ads";
 
 /**
  * Rewarded-ad Server-Side Verification (SSV) callback.
@@ -122,14 +121,21 @@ async function handle(request: Request): Promise<Response> {
   // A real reward callback with a bad signature is rejected and never credited.
   if (!signatureOk) return new Response("unverified", { status: 401 });
 
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-  // The callback must come from this app's own rewarded ad unit.
-  const expectedUnit = REWARDED_AD_UNIT_ID.split("/").pop();
-  if (adUnit && expectedUnit && adUnit !== expectedUnit && adUnit !== REWARDED_AD_UNIT_ID) {
-    return new Response("unexpected ad unit", { status: 401 });
+  // The callback must come from the ad unit configured by the app owner.
+  const { data: settings } = await supabaseAdmin
+    .from("ad_settings")
+    .select("rewarded_ad_unit_id")
+    .maybeSingle();
+  const configuredUnit = settings?.rewarded_ad_unit_id ?? null;
+  if (adUnit && configuredUnit) {
+    const expectedUnit = configuredUnit.split("/").pop();
+    if (adUnit !== expectedUnit && adUnit !== configuredUnit) {
+      return new Response("unexpected ad unit", { status: 401 });
+    }
   }
 
-  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
   // The view must have been started by this signed-in user (own choice to watch).
   const { data: viewRequest } = await supabaseAdmin

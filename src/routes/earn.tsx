@@ -18,7 +18,8 @@ import {
   Copy,
 } from "lucide-react";
 import { AppShell, PageHeader } from "@/components/AppShell";
-import { REWARDED_AD_UNIT_ID, SSV_CALLBACK_URL } from "@/config/ads";
+import { SSV_CALLBACK_URL, maskAdUnitId } from "@/config/ads";
+import { fetchAdSettings, cachedAdSettings, logAdError, type AdSettings } from "@/lib/ad-settings";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/use-auth";
 import {
@@ -158,6 +159,7 @@ function EarnPage() {
   const [refreshSecs, setRefreshSecs] = useState(10);
   const [isOwner, setIsOwner] = useState(false);
   const [ssvUrl, setSsvUrl] = useState("");
+  const [adSettings, setAdSettings] = useState<AdSettings | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const lockRef = useRef(false);
 
@@ -165,6 +167,10 @@ function EarnPage() {
     setMock(isMockMode());
     setRefreshSecs(loadRefreshSecs());
     setSsvUrl(SSV_CALLBACK_URL);
+    setAdSettings(cachedAdSettings());
+    void fetchAdSettings(true).then((s) => {
+      if (s) setAdSettings(s);
+    });
   }, []);
 
   /* هل هذا الحساب مالك التطبيق؟ (لعرض واجهة سحب الأرباح) */
@@ -260,11 +266,21 @@ function EarnPage() {
     return () => clearInterval(t);
   }, [user, hasPending, autoRefresh, refreshSecs, load]);
 
-  const adUnitId = REWARDED_AD_UNIT_ID || null;
+  const adUnitId = adSettings?.rewarded_ad_unit_id ?? null;
+  const adsEnabled = adSettings ? adSettings.ads_enabled && adSettings.rewarded_enabled : false;
   const locked = busy || waiting;
 
   const watch = async () => {
     if (!user || lockRef.current || locked) return;
+    if (!adsEnabled) {
+      toast.error("الإعلانات غير مفعّلة حالياً من إدارة التطبيق.");
+      return;
+    }
+    if (!adUnitId) {
+      toast.error("لم يتم ضبط معرّف الوحدة الإعلانية بعد، لذلك لا يمكن تحميل الإعلان.");
+      void logAdError({ userId: user.id, adUnitId: null, stage: "missing-ad-unit" });
+      return;
+    }
     lockRef.current = true;
     setBusy(true);
     try {
@@ -275,22 +291,38 @@ function EarnPage() {
       });
       if (error) throw error;
 
-      const res = await showRewardedAd(user.id, transactionId);
+      const res = await showRewardedAd(user.id, transactionId, adUnitId);
       if (!res.shown) {
         toast.error(
           res.reason === "unavailable"
             ? "الإعلانات غير متاحة على هذا الجهاز حالياً."
             : res.reason === "cancelled"
               ? "تم إلغاء الإعلان قبل إكماله، لذلك لم يُضف أي رصيد."
-              : "تعذّر تشغيل الإعلان، ولم يُضف أي رصيد.",
+              : res.reason === "invalid-ad-unit"
+                ? "معرّف الوحدة الإعلانية غير صالح، راجع إعدادات الإعلانات."
+                : res.reason === "no-ad-unit"
+                  ? "لم يتم ضبط معرّف الوحدة الإعلانية بعد."
+                  : "تعذّر تشغيل الإعلان، ولم يُضف أي رصيد.",
         );
+        void logAdError({
+          userId: user.id,
+          adUnitId,
+          stage: res.reason ?? "failed",
+          message: res.message,
+        });
         return;
       }
       setWaiting(true);
       toast.info("جاري التحقق من المشاهدة...");
       void load();
-    } catch {
+    } catch (e) {
       toast.error("تعذّر بدء العملية، حاول لاحقاً.");
+      void logAdError({
+        userId: user.id,
+        adUnitId,
+        stage: "start-failed",
+        message: e instanceof Error ? e.message : String(e),
+      });
     } finally {
       setBusy(false);
       lockRef.current = false;
@@ -459,7 +491,7 @@ function EarnPage() {
           </p>
         )}
 
-        {!isRewardedAdAvailable() && !mock && (
+        {!isRewardedAdAvailable(adUnitId) && !mock && (
           <p className="text-[11px] text-muted-foreground text-center">
             مشاهدة الإعلان اختيارية بالكامل، وتتوفر عند تشغيل التطبيق على جهاز يدعم إعلانات المكافأة.
           </p>
@@ -473,7 +505,13 @@ function EarnPage() {
           <div className="flex items-center justify-between gap-2 text-[11px]">
             <span className="text-muted-foreground">معرّف وحدة الإعلان</span>
             <span className={adUnitId ? "font-bold tabular-nums truncate" : "text-red-400 font-bold"}>
-              {adUnitId ?? "غير مضبوط بعد"}
+              {adUnitId ? maskAdUnitId(adUnitId) : "غير مضبوط بعد"}
+            </span>
+          </div>
+          <div className="flex items-center justify-between gap-2 text-[11px]">
+            <span className="text-muted-foreground">الإعلانات</span>
+            <span className={adsEnabled ? "font-bold text-emerald-400" : "font-bold text-red-400"}>
+              {adsEnabled ? "مفعّلة" : "غير مفعّلة"}
             </span>
           </div>
           <div className="text-[11px] space-y-1">

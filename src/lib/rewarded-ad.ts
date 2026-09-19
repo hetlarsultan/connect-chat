@@ -5,12 +5,15 @@
  * chose to watch. Crediting happens server-side after the ad network calls the
  * SSV endpoint (/api/public/ads/ssv).
  *
+ * The ad unit id is always supplied by the caller from the owner-managed app
+ * settings — it is never hardcoded here.
+ *
  * A local mock mode is available to exercise the full flow (ad → SSV result)
  * without real ads. Mock runs are simulated only: they never touch the
  * database, the wallet, or any user data.
  */
 
-import { REWARDED_AD_UNIT_ID } from "@/config/ads";
+import { isValidAdUnitId } from "@/config/ads";
 
 type AdMobBridge = {
   prepareRewardVideoAd?: (opts: { adId: string; ssv?: { userId: string; customData?: string } }) => Promise<unknown>;
@@ -22,9 +25,10 @@ function getBridge(): AdMobBridge | null {
   return w.AdMob ?? w.admob ?? null;
 }
 
-export function isRewardedAdAvailable(): boolean {
+/** Is a rewarded ad playable right now with this ad unit id? */
+export function isRewardedAdAvailable(adUnitId?: string | null): boolean {
   const bridge = getBridge();
-  return Boolean(bridge?.showRewardVideoAd && REWARDED_AD_UNIT_ID);
+  return Boolean(bridge?.showRewardVideoAd && adUnitId && isValidAdUnitId(adUnitId));
 }
 
 /* ------------------------------ mock mode ------------------------------ */
@@ -51,7 +55,11 @@ export function setMockMode(on: boolean) {
 
 export type MockOutcome = "verified" | "failed" | "cancelled";
 
-export type ShowResult = { shown: boolean; reason?: "unavailable" | "failed" | "cancelled" };
+export type ShowResult = {
+  shown: boolean;
+  reason?: "unavailable" | "failed" | "cancelled" | "no-ad-unit" | "invalid-ad-unit" | "disabled";
+  message?: string;
+};
 
 /** Simulated ad playback + SSV result. No network, no DB writes. */
 export async function runMockFlow(outcome: MockOutcome): Promise<{ result: ShowResult }> {
@@ -61,18 +69,25 @@ export async function runMockFlow(outcome: MockOutcome): Promise<{ result: ShowR
 }
 
 /** Plays the rewarded ad, passing the user id + transaction id to the network for SSV. */
-export async function showRewardedAd(userId: string, transactionId: string): Promise<ShowResult> {
+export async function showRewardedAd(
+  userId: string,
+  transactionId: string,
+  adUnitId: string | null | undefined,
+): Promise<ShowResult> {
+  const adId = adUnitId?.trim() || "";
+  // No ad unit configured => never attempt to load an ad.
+  if (!adId) return { shown: false, reason: "no-ad-unit" };
+  if (!isValidAdUnitId(adId)) return { shown: false, reason: "invalid-ad-unit" };
+
   const bridge = getBridge();
-  const adId = REWARDED_AD_UNIT_ID;
-  if (!bridge?.showRewardVideoAd || !adId) {
-    return { shown: false, reason: "unavailable" };
-  }
+  if (!bridge?.showRewardVideoAd) return { shown: false, reason: "unavailable" };
+
   try {
     await bridge.prepareRewardVideoAd?.({ adId, ssv: { userId, customData: transactionId } });
     const res = (await bridge.showRewardVideoAd()) as { rewarded?: boolean; dismissed?: boolean } | undefined;
     if (res && res.rewarded === false) return { shown: false, reason: "cancelled" };
     return { shown: true };
-  } catch {
-    return { shown: false, reason: "failed" };
+  } catch (e) {
+    return { shown: false, reason: "failed", message: e instanceof Error ? e.message : String(e) };
   }
 }
