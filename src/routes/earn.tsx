@@ -18,7 +18,8 @@ import {
   Copy,
 } from "lucide-react";
 import { AppShell, PageHeader } from "@/components/AppShell";
-import { REWARDED_AD_UNIT_ID, SSV_CALLBACK_URL } from "@/config/ads";
+import { SSV_CALLBACK_URL, maskAdUnitId } from "@/config/ads";
+import { fetchAdSettings, cachedAdSettings, logAdError, type AdSettings } from "@/lib/ad-settings";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/use-auth";
 import {
