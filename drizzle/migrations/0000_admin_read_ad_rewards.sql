@@ -1,0 +1,2 @@
+CREATE POLICY ad_rewards_select_admin ON public.ad_reward_transactions FOR SELECT TO authenticated USING (public.has_role(auth.uid(), 'admin'::app_role));
+CREATE POLICY ad_view_requests_select_admin ON public.ad_view_requests FOR SELECT TO authenticated USING (public.has_role(auth.uid(), 'admin'::app_role));

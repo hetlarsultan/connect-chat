@@ -3,9 +3,11 @@ import { BottomNav } from "./BottomNav";
 import { TopNav } from "./TopNav";
 import { GuestUpgradeBadge } from "./GuestUpgradeBadge";
 import { useRewardWatch } from "@/lib/use-reward-watch";
+import { useOwnerRewardWatch } from "@/lib/use-owner-reward-watch";
 
 export function AppShell({ children, hideNav = false }: { children: ReactNode; hideNav?: boolean }) {
   useRewardWatch();
+  useOwnerRewardWatch();
   return (
     <div className="min-h-dvh max-w-md mx-auto bg-background/40 border-x border-border/40 relative">
       {!hideNav && <TopNav />}

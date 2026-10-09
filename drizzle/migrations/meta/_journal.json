@@ -1,0 +1,13 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1791546848501,
+      "tag": "0000_admin_read_ad_rewards",
+      "breakpoints": true
+    }
+  ]
+}
