@@ -18,6 +18,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/use-auth";
 import { fetchAdSettings, saveAdSettings, type AdSettings } from "@/lib/ad-settings";
 import { isValidAdUnitId, maskAdUnitId } from "@/config/ads";
+import { AdDiagnoseSection } from "@/components/AdDiagnoseSection";
 
 export const Route = createFileRoute("/ads-admin")({
   head: () => ({
