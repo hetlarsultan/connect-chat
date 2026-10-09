@@ -301,6 +301,7 @@ function AdsAdminPage() {
 
             {/* ---- إعدادات الإعلانات (المالك فقط) ---- */}
             <AdSettingsSection userId={user?.id ?? null} />
+            <AdDiagnoseSection />
 
 
             {/* ---- سجل السحب ---- */}
