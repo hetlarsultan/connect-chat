@@ -484,3 +484,37 @@ function AdSettingsSection({ userId }: { userId: string | null }) {
     </div>
   );
 }
+
+/** Generates the exact AdMob SSV callback URL for the domain the app runs on, and copies it. */
+function SsvUrlCopy() {
+  const [url, setUrl] = useState("");
+  useEffect(() => {
+    setUrl(buildSsvCallbackUrl(window.location.origin));
+  }, []);
+
+  const copy = async () => {
+    const value = url || buildSsvCallbackUrl(window.location.origin);
+    try {
+      await navigator.clipboard.writeText(value);
+      toast.success("تم نسخ رابط التحقق. الصقه في AdMob ← إعدادات الوحدة ← التحقق من جهة الخادم.");
+    } catch {
+      toast.error("تعذّر النسخ تلقائيًا، انسخ الرابط الظاهر يدويًا.");
+    }
+  };
+
+  return (
+    <div className="space-y-1.5 text-[11px]">
+      <span className="text-muted-foreground">رابط التحقق من المشاهدة (SSV) لـ AdMob</span>
+      <code dir="ltr" className="block px-2 py-1.5 rounded-xl bg-background border border-border text-[10px] break-all">
+        {url || "…"}
+      </code>
+      <button
+        type="button"
+        onClick={() => void copy()}
+        className="w-full py-2.5 rounded-2xl bg-primary/15 text-primary text-xs font-bold flex items-center justify-center gap-2"
+      >
+        <Copy className="size-3.5" /> نسخ رابط التحقق
+      </button>
+    </div>
+  );
+}
