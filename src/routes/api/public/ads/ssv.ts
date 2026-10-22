@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { resolveSsvBinding } from "@/lib/ssv-binding";
 
 /**
  * Rewarded-ad Server-Side Verification (SSV) callback.
@@ -137,40 +138,64 @@ async function handle(request: Request): Promise<Response> {
   }
 
 
-  // The view must have been started by this signed-in user (own choice to watch).
-  const { data: viewRequest } = await supabaseAdmin
-    .from("ad_view_requests")
-    .select("user_id")
-    .eq("transaction_id", lookupId)
-    .maybeSingle();
-
-  // user_id is optional in the callback; fall back to the recorded request owner.
-  const claimedUserId = params.get("user_id");
-  const userId = viewRequest?.user_id ?? null;
-
-  if (!userId || (claimedUserId && claimedUserId !== userId)) {
-    if (viewRequest) {
-      await supabaseAdmin.rpc("record_failed_ad_reward", {
-        _user_id: viewRequest.user_id,
-        _transaction_id: lookupId,
-        _ad_network: adNetwork,
-      });
-    }
-    return new Response("unknown transaction", { status: 200 });
+  // AdMob's own transaction_id is unique per real view: never credit it twice.
+  if (transactionId) {
+    const { data: seen } = await supabaseAdmin
+      .from("ad_reward_transactions")
+      .select("id")
+      .eq("network_transaction_id", transactionId)
+      .maybeSingle();
+    if (seen) return new Response("duplicate", { status: 200 });
   }
 
+  // Bind the callback to the user who started the view: custom_data is the
+  // app's view-request id and user_id must be the owner of that request.
+  const requestId = customData?.trim() || null;
+  const { data: viewRequest } = requestId
+    ? await supabaseAdmin.from("ad_view_requests").select("user_id").eq("transaction_id", requestId).maybeSingle()
+    : { data: null };
+
+  const binding = resolveSsvBinding({
+    customData: requestId,
+    claimedUserId: params.get("user_id"),
+    requestOwnerId: viewRequest?.user_id ?? null,
+  });
+
+  if (!binding.ok) {
+    if (binding.ownerId && requestId) {
+      await supabaseAdmin.rpc("record_failed_ad_reward", {
+        _user_id: binding.ownerId,
+        _transaction_id: requestId,
+        _ad_network: adNetwork,
+      });
+      await supabaseAdmin
+        .from("ad_reward_transactions")
+        .update({ failure_reason: binding.reason, network_transaction_id: transactionId })
+        .eq("transaction_id", requestId)
+        .neq("credit_status", "credited");
+    }
+    return new Response(binding.reason, { status: 200 });
+  }
 
   // Gross value approved by the app's own earnings config — never the network payout
   // itself, and never exposed to the client. The user's share is 25% (in SQL).
   const grossValue = Number(process.env["AD_REWARD_GROSS_VALUE"] ?? "0.004");
 
   const { error } = await supabaseAdmin.rpc("credit_ad_reward", {
-    _user_id: userId,
-    _transaction_id: lookupId,
+    _user_id: binding.userId,
+    _transaction_id: binding.requestId,
     _gross_value: grossValue,
     _ad_network: adNetwork,
   });
   if (error) return new Response("error", { status: 500 });
+
+  if (transactionId) {
+    await supabaseAdmin
+      .from("ad_reward_transactions")
+      .update({ network_transaction_id: transactionId })
+      .eq("transaction_id", binding.requestId)
+      .is("network_transaction_id", null);
+  }
 
   return new Response("ok");
 }
