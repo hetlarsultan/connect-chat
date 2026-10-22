@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { resolveSsvBinding } from "@/lib/ssv-binding";
 
 /**
  * Rewarded-ad Server-Side Verification (SSV) callback.
