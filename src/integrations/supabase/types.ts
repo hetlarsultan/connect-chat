@@ -46,7 +46,13 @@ export type Database = {
           ad_network: string
           created_at: string
           credit_status: string
+          failure_reason: string | null
           id: string
+          manual_action: string | null
+          manual_at: string | null
+          manual_by: string | null
+          manual_note: string | null
+          network_transaction_id: string | null
           notified_at: string | null
           occurred_at: string
           reward_amount: number
@@ -59,7 +65,13 @@ export type Database = {
           ad_network?: string
           created_at?: string
           credit_status?: string
+          failure_reason?: string | null
           id?: string
+          manual_action?: string | null
+          manual_at?: string | null
+          manual_by?: string | null
+          manual_note?: string | null
+          network_transaction_id?: string | null
           notified_at?: string | null
           occurred_at?: string
           reward_amount?: number
@@ -72,7 +84,13 @@ export type Database = {
           ad_network?: string
           created_at?: string
           credit_status?: string
+          failure_reason?: string | null
           id?: string
+          manual_action?: string | null
+          manual_at?: string | null
+          manual_by?: string | null
+          manual_note?: string | null
+          network_transaction_id?: string | null
           notified_at?: string | null
           occurred_at?: string
           reward_amount?: number
@@ -482,6 +500,23 @@ export type Database = {
           verification_rate: number
           verified_count: number
         }[]
+      }
+      owner_manual_credit: {
+        Args: {
+          _gross_value: number
+          _note?: string
+          _owner_id: string
+          _transaction_id: string
+        }
+        Returns: {
+          credited: boolean
+          message: string
+          reward: number
+        }[]
+      }
+      owner_manual_reject: {
+        Args: { _note?: string; _owner_id: string; _transaction_id: string }
+        Returns: string
       }
       owner_reward_overview: {
         Args: never
