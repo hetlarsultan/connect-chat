@@ -15,6 +15,31 @@ export const SSV_PATH = "/api/public/ads/ssv";
 export const SSV_CALLBACK_URL =
   `https://project--51264dbf-e956-4d43-bb85-2c36be6600e4.lovable.app${SSV_PATH}`;
 
+/**
+ * Builds the exact SSV callback URL to paste into AdMob, from the domain the
+ * app is currently served on. Editor previews, localhost and other private
+ * hosts can't be reached by AdMob, so they fall back to the stable public URL.
+ */
+export function buildSsvCallbackUrl(origin: string | null | undefined): string {
+  if (!origin) return SSV_CALLBACK_URL;
+  let url: URL;
+  try {
+    url = new URL(origin);
+  } catch {
+    return SSV_CALLBACK_URL;
+  }
+  const host = url.hostname;
+  const isPrivate =
+    url.protocol !== "https:" ||
+    host === "localhost" ||
+    /^\d+\.\d+\.\d+\.\d+$/.test(host) ||
+    host.startsWith("id-preview--") ||
+    host.endsWith("-dev.lovable.app") ||
+    host.endsWith(".lovableproject.com");
+  if (isPrivate) return SSV_CALLBACK_URL;
+  return `${url.origin}${SSV_PATH}`;
+}
+
 /** AdMob ad unit id format: ca-app-pub-<16 digits>/<10 digits>. */
 export const AD_UNIT_ID_PATTERN = /^ca-app-pub-\d{16}\/\d{6,12}$/;
 
