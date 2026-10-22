@@ -20,6 +20,7 @@ import { Route as NotificationsRouteImport } from './routes/notifications'
 import { Route as PayoutsRouteImport } from './routes/payouts'
 import { Route as RewardsRouteImport } from './routes/rewards'
 import { Route as RulesRouteImport } from './routes/rules'
+import { Route as SsvMonitorRouteImport } from './routes/ssv-monitor'
 import { Route as ChatRoomIdRouteImport } from './routes/chat.$roomId'
 import { Route as MessagesIndexRouteImport } from './routes/messages.index'
 import { Route as MessagesUserIdRouteImport } from './routes/messages.$userId'
@@ -82,6 +83,11 @@ const RulesRoute = RulesRouteImport.update({
   path: '/rules',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SsvMonitorRoute = SsvMonitorRouteImport.update({
+  id: '/ssv-monitor',
+  path: '/ssv-monitor',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ChatRoomIdRoute = ChatRoomIdRouteImport.update({
   id: '/chat/$roomId',
   path: '/chat/$roomId',
@@ -125,6 +131,7 @@ export interface FileRoutesByFullPath {
   '/payouts': typeof PayoutsRoute
   '/rewards': typeof RewardsRoute
   '/rules': typeof RulesRoute
+  '/ssv-monitor': typeof SsvMonitorRoute
   '/chat/$roomId': typeof ChatRoomIdRoute
   '/messages/$userId': typeof MessagesUserIdRoute
   '/profile/$userId': typeof ProfileUserIdRoute
@@ -144,6 +151,7 @@ export interface FileRoutesByTo {
   '/payouts': typeof PayoutsRoute
   '/rewards': typeof RewardsRoute
   '/rules': typeof RulesRoute
+  '/ssv-monitor': typeof SsvMonitorRoute
   '/chat/$roomId': typeof ChatRoomIdRoute
   '/messages/$userId': typeof MessagesUserIdRoute
   '/profile/$userId': typeof ProfileUserIdRoute
@@ -164,6 +172,7 @@ export interface FileRoutesById {
   '/payouts': typeof PayoutsRoute
   '/rewards': typeof RewardsRoute
   '/rules': typeof RulesRoute
+  '/ssv-monitor': typeof SsvMonitorRoute
   '/chat/$roomId': typeof ChatRoomIdRoute
   '/messages/$userId': typeof MessagesUserIdRoute
   '/profile/$userId': typeof ProfileUserIdRoute
@@ -185,6 +194,7 @@ export interface FileRouteTypes {
     | '/payouts'
     | '/rewards'
     | '/rules'
+    | '/ssv-monitor'
     | '/chat/$roomId'
     | '/messages/$userId'
     | '/profile/$userId'
@@ -204,6 +214,7 @@ export interface FileRouteTypes {
     | '/payouts'
     | '/rewards'
     | '/rules'
+    | '/ssv-monitor'
     | '/chat/$roomId'
     | '/messages/$userId'
     | '/profile/$userId'
@@ -223,6 +234,7 @@ export interface FileRouteTypes {
     | '/payouts'
     | '/rewards'
     | '/rules'
+    | '/ssv-monitor'
     | '/chat/$roomId'
     | '/messages/$userId'
     | '/profile/$userId'
@@ -243,6 +255,7 @@ export interface RootRouteChildren {
   PayoutsRoute: typeof PayoutsRoute
   RewardsRoute: typeof RewardsRoute
   RulesRoute: typeof RulesRoute
+  SsvMonitorRoute: typeof SsvMonitorRoute
   ChatRoomIdRoute: typeof ChatRoomIdRoute
   MessagesUserIdRoute: typeof MessagesUserIdRoute
   ProfileUserIdRoute: typeof ProfileUserIdRoute
@@ -330,6 +343,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RulesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/ssv-monitor': {
+      id: '/ssv-monitor'
+      path: '/ssv-monitor'
+      fullPath: '/ssv-monitor'
+      preLoaderRoute: typeof SsvMonitorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/chat/$roomId': {
       id: '/chat/$roomId'
       path: '/chat/$roomId'
@@ -387,6 +407,7 @@ const rootRouteChildren: RootRouteChildren = {
   PayoutsRoute: PayoutsRoute,
   RewardsRoute: RewardsRoute,
   RulesRoute: RulesRoute,
+  SsvMonitorRoute: SsvMonitorRoute,
   ChatRoomIdRoute: ChatRoomIdRoute,
   MessagesUserIdRoute: MessagesUserIdRoute,
   ProfileUserIdRoute: ProfileUserIdRoute,

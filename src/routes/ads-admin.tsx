@@ -5,6 +5,8 @@ import {
   BarChart3,
   Banknote,
   Clock,
+  Copy,
+  ListChecks,
   Loader2,
   Lock,
   Percent,
@@ -17,7 +19,7 @@ import { AppShell, PageHeader } from "@/components/AppShell";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/use-auth";
 import { fetchAdSettings, saveAdSettings, type AdSettings } from "@/lib/ad-settings";
-import { isValidAdUnitId, maskAdUnitId } from "@/config/ads";
+import { buildSsvCallbackUrl, isValidAdUnitId, maskAdUnitId } from "@/config/ads";
 import { AdDiagnoseSection } from "@/components/AdDiagnoseSection";
 
 export const Route = createFileRoute("/ads-admin")({
@@ -301,6 +303,14 @@ function AdsAdminPage() {
 
             {/* ---- إعدادات الإعلانات (المالك فقط) ---- */}
             <AdSettingsSection userId={user?.id ?? null} />
+
+            <Link
+              to="/ssv-monitor"
+              className="flex items-center justify-center gap-2 py-3 rounded-2xl bg-primary/15 text-xs font-bold text-primary"
+            >
+              <ListChecks className="size-4" /> متابعة عمليات التحقق حسب المستخدم
+            </Link>
+
             <AdDiagnoseSection />
 
 
@@ -464,6 +474,8 @@ function AdSettingsSection({ userId }: { userId: string | null }) {
         {saving ? <Loader2 className="size-4 animate-spin" /> : <Settings2 className="size-4" />}
         حفظ وتفعيل
       </button>
+
+      <SsvUrlCopy />
 
       <p className="text-[10px] text-muted-foreground/80 leading-relaxed">
         هذه الإعدادات متاحة لمالك التطبيق فقط، ولا يستطيع أي مستخدم عادي تغييرها. رابط التحقق من المشاهدة (SSV) منفصل
