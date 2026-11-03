@@ -5,4 +5,5 @@
 - [x] "Copy verification link" button in ad settings that generates the correct AdMob SSV URL
 - [x] Bind every SSV reward to the watcher via user_id + custom_data
 - [x] Publish the app
+- [x] Diagnose "ads unavailable on this device": detailed LoadAdError log, retry button, test ads in dev
 - [ ] Watch a real rewarded ad on a phone and confirm the log + wallet (blocked: needs the native phone app with the AdMob SDK; can't be done from here)

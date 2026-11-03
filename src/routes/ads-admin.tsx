@@ -304,6 +304,8 @@ function AdsAdminPage() {
             {/* ---- إعدادات الإعلانات (المالك فقط) ---- */}
             <AdSettingsSection userId={user?.id ?? null} />
 
+            <AdErrorLogSection />
+
             <Link
               to="/ssv-monitor"
               className="flex items-center justify-center gap-2 py-3 rounded-2xl bg-primary/15 text-xs font-bold text-primary"
@@ -515,6 +517,83 @@ function SsvUrlCopy() {
       >
         <Copy className="size-3.5" /> نسخ رابط التحقق
       </button>
+    </div>
+  );
+}
+
+type AdErrorRow = { id: string; stage: string; message: string | null; ad_unit_id: string | null; created_at: string };
+
+/** Owner-only: latest ad loading failures from all users, with LoadAdError details. */
+function AdErrorLogSection() {
+  const [rows, setRows] = useState<AdErrorRow[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    const { data } = await supabase
+      .from("ad_error_logs")
+      .select("id,stage,message,ad_unit_id,created_at")
+      .order("created_at", { ascending: false })
+      .limit(15);
+    setRows((data ?? []) as AdErrorRow[]);
+    setLoading(false);
+  }, []);
+
+  useEffect(() => {
+    void load();
+  }, [load]);
+
+  return (
+    <div className="p-4 rounded-2xl bg-surface border border-border space-y-2 text-[11px]">
+      <div className="flex items-center justify-between">
+        <h3 className="text-sm font-bold flex items-center gap-2">
+          <XCircle className="size-4 text-red-400" /> سجل أخطاء تحميل الإعلانات
+        </h3>
+        <button type="button" onClick={() => void load()} aria-label="تحديث السجل" className="p-1.5 rounded-xl bg-primary/15">
+          <RefreshCw className={`size-3.5 ${loading ? "animate-spin" : ""}`} />
+        </button>
+      </div>
+      {rows.length === 0 ? (
+        <p className="text-muted-foreground">لا توجد أخطاء مسجّلة.</p>
+      ) : (
+        rows.map((r) => {
+          let d: Record<string, unknown> | null = null;
+          try {
+            d = r.message ? (JSON.parse(r.message) as Record<string, unknown>) : null;
+          } catch {
+            d = null;
+          }
+          return (
+            <div key={r.id} className="p-2.5 rounded-xl bg-background border border-border space-y-1">
+              <div className="flex items-center justify-between gap-2">
+                <span dir="ltr" className="font-mono font-bold">
+                  {r.stage}
+                  {d?.code !== undefined && d?.code !== null ? ` · ${String(d.code)} ${String(d.codeName ?? "")}` : ""}
+                </span>
+                <span className="text-muted-foreground">
+                  {new Date(r.created_at).toLocaleString("ar", { dateStyle: "short", timeStyle: "short" })}
+                </span>
+              </div>
+              {d ? (
+                <>
+                  {typeof d.explanation === "string" && <p className="leading-relaxed">{d.explanation}</p>}
+                  <p dir="ltr" className="text-muted-foreground font-mono break-all">
+                    {String(d.platform ?? "?")} · {d.testMode ? "test ads" : "real ads"}
+                    {d.message ? ` · ${String(d.message)}` : ""}
+                  </p>
+                  {d.responseInfo != null && (
+                    <pre dir="ltr" className="text-[10px] overflow-x-auto max-h-32">
+                      {JSON.stringify(d.responseInfo, null, 2)}
+                    </pre>
+                  )}
+                </>
+              ) : (
+                r.message && <p dir="ltr" className="text-muted-foreground font-mono break-all">{r.message}</p>
+              )}
+            </div>
+          );
+        })
+      )}
     </div>
   );
 }

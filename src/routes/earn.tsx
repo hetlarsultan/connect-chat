@@ -28,8 +28,10 @@ import {
   isMockMode,
   setMockMode,
   runMockFlow,
+  resetAdSdk,
   type MockOutcome,
 } from "@/lib/rewarded-ad";
+import type { AdDiagnostic } from "@/lib/admob-diagnostics";
 
 
 export const Route = createFileRoute("/earn")({
@@ -160,6 +162,7 @@ function EarnPage() {
   const [isOwner, setIsOwner] = useState(false);
   const [ssvUrl, setSsvUrl] = useState("");
   const [adSettings, setAdSettings] = useState<AdSettings | null>(null);
+  const [lastDiag, setLastDiag] = useState<AdDiagnostic | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const lockRef = useRef(false);
 
@@ -292,24 +295,32 @@ function EarnPage() {
       if (error) throw error;
 
       const res = await showRewardedAd(user.id, transactionId, adUnitId);
+      setLastDiag(res.diagnostic ?? null);
       if (!res.shown) {
+        const d = res.diagnostic;
+        const why = d?.explanation ?? "تعذّر تشغيل الإعلان.";
         toast.error(
-          res.reason === "unavailable"
-            ? "الإعلانات غير متاحة على هذا الجهاز حالياً."
-            : res.reason === "cancelled"
-              ? "تم إلغاء الإعلان قبل إكماله، لذلك لم يُضف أي رصيد."
-              : res.reason === "invalid-ad-unit"
-                ? "معرّف الوحدة الإعلانية غير صالح، راجع إعدادات الإعلانات."
-                : res.reason === "no-ad-unit"
-                  ? "لم يتم ضبط معرّف الوحدة الإعلانية بعد."
-                  : "تعذّر تشغيل الإعلان، ولم يُضف أي رصيد.",
+          res.reason === "cancelled"
+            ? "تم إلغاء الإعلان قبل إكماله، لذلك لم يُضف أي رصيد."
+            : `${why}${d?.code !== null && d?.code !== undefined ? ` (رمز ${d.code})` : ""} لم يُضف أي رصيد.`,
         );
-        void logAdError({
-          userId: user.id,
-          adUnitId,
-          stage: res.reason ?? "failed",
-          message: res.message,
-        });
+        if (res.reason !== "cancelled") {
+          void logAdError({
+            userId: user.id,
+            adUnitId: d?.adUnitId ?? adUnitId,
+            stage: d?.stage ?? res.reason ?? "failed",
+            message: JSON.stringify({
+              platform: d?.platform,
+              testMode: d?.testMode,
+              code: d?.code,
+              codeName: d?.codeName,
+              domain: d?.domain,
+              message: d?.message || res.message,
+              responseInfo: d?.responseInfo ?? null,
+              explanation: d?.explanation,
+            }).slice(0, 4000),
+          });
+        }
         return;
       }
       setWaiting(true);
@@ -495,6 +506,60 @@ function EarnPage() {
           <p className="text-[11px] text-muted-foreground text-center">
             مشاهدة الإعلان اختيارية بالكامل، وتتوفر عند تشغيل التطبيق على جهاز يدعم إعلانات المكافأة.
           </p>
+        )}
+
+        {/* ---- سجل تشخيص آخر محاولة تحميل إعلان ---- */}
+        {lastDiag && !mock && lastDiag.stage !== "shown" && (
+          <div className="p-4 rounded-2xl bg-surface border border-red-400/40 space-y-2 text-[11px]">
+            <h3 className="text-xs font-bold flex items-center gap-2">
+              <ShieldAlert className="size-4 text-red-400" /> سجل التشخيص: سبب فشل تحميل الإعلان
+            </h3>
+            <p className="leading-relaxed">{lastDiag.explanation}</p>
+            <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-muted-foreground">
+              <dt>المرحلة</dt>
+              <dd dir="ltr" className="text-left font-mono">{lastDiag.stage}</dd>
+              <dt>الجهاز</dt>
+              <dd dir="ltr" className="text-left font-mono">{lastDiag.platform}</dd>
+              <dt>نوع الإعلانات</dt>
+              <dd className="text-left">{lastDiag.testMode ? "تجريبية (نسخة تطوير)" : "حقيقية (نسخة الإنتاج)"}</dd>
+              {lastDiag.code !== null && (
+                <>
+                  <dt>LoadAdError</dt>
+                  <dd dir="ltr" className="text-left font-mono">
+                    {lastDiag.code} {lastDiag.codeName}
+                  </dd>
+                </>
+              )}
+              {lastDiag.domain && (
+                <>
+                  <dt>Domain</dt>
+                  <dd dir="ltr" className="text-left font-mono break-all">{lastDiag.domain}</dd>
+                </>
+              )}
+              {lastDiag.message && (
+                <>
+                  <dt>الرسالة</dt>
+                  <dd dir="ltr" className="text-left font-mono break-all">{lastDiag.message}</dd>
+                </>
+              )}
+            </dl>
+            {lastDiag.responseInfo != null && (
+              <pre dir="ltr" className="p-2 rounded-xl bg-background border border-border text-[10px] overflow-x-auto max-h-40">
+                {JSON.stringify(lastDiag.responseInfo, null, 2)}
+              </pre>
+            )}
+            <button
+              type="button"
+              onClick={() => {
+                resetAdSdk();
+                void watch();
+              }}
+              disabled={locked}
+              className="w-full flex items-center justify-center gap-2 py-2.5 rounded-2xl bg-primary/15 text-primary text-xs font-bold disabled:opacity-50"
+            >
+              <RefreshCw className="size-4" /> إعادة محاولة تحميل الإعلان
+            </button>
+          </div>
         )}
 
         {/* ---- إعداد شبكة الإعلانات ---- */}
