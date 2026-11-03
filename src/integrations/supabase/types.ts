@@ -468,6 +468,15 @@ export type Database = {
           reward: number
         }[]
       }
+      get_ad_config: {
+        Args: never
+        Returns: {
+          ads_enabled: boolean
+          rewarded_ad_unit_id: string
+          rewarded_enabled: boolean
+          updated_at: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -557,6 +566,7 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      username_available: { Args: { _username: string }; Returns: boolean }
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"

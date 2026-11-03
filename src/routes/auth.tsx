@@ -69,9 +69,9 @@ function AuthPage() {
     }
     setLoading(true);
     try {
-      // Check username uniqueness
-      const { data: existing } = await supabase.from("profiles").select("id").eq("username", username.trim()).maybeSingle();
-      if (existing) {
+      // Check username uniqueness (profiles are private to signed-in users)
+      const { data: available } = await supabase.rpc("username_available", { _username: username.trim() });
+      if (available === false) {
         toast.error("اسم المستخدم محجوز");
         return;
       }

@@ -42,10 +42,10 @@ function writeCache(v: AdSettings) {
 /** Latest settings from the database (cached briefly, cache used for instant paint). */
 export async function fetchAdSettings(force = false): Promise<AdSettings | null> {
   if (!force && memo && Date.now() - memo.at < CACHE_TTL) return memo.value;
-  const { data, error } = await supabase
-    .from("ad_settings")
-    .select("rewarded_ad_unit_id,ads_enabled,rewarded_enabled,updated_at")
-    .maybeSingle();
+  // Signed-in users read only the fields the app needs through get_ad_config();
+  // the full settings row is readable by the owner only.
+  const { data: rows, error } = await supabase.rpc("get_ad_config");
+  const data = Array.isArray(rows) ? rows[0] : rows;
   if (error || !data) return memo?.value ?? readCache();
   const value: AdSettings = {
     rewarded_ad_unit_id: data.rewarded_ad_unit_id ?? null,
