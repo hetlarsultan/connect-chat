@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { resolveSsvBinding } from "@/lib/ssv-binding";
+import { isExpectedAdUnit, verifySsvQuery, type VerifierKey } from "@/lib/ssv-verify";
 
 /**
  * Rewarded-ad Server-Side Verification (SSV) callback.
@@ -15,78 +16,17 @@ import { resolveSsvBinding } from "@/lib/ssv-binding";
  * The signed message is the raw query string up to (but excluding) "&signature=".
  */
 
-const VERIFIER_KEYS_URL = "https://gstatic.com/admob/reward/verifier-keys.json";
-
-type VerifierKey = { keyId: number; pem: string; base64: string };
+const VERIFIER_KEYS_URL = "https://www.gstatic.com/admob/reward/verifier-keys.json";
 
 let keyCache: { at: number; keys: VerifierKey[] } | null = null;
 
-async function getVerifierKeys(): Promise<VerifierKey[]> {
-  if (keyCache && Date.now() - keyCache.at < 6 * 60 * 60 * 1000) return keyCache.keys;
-  const res = await fetch(VERIFIER_KEYS_URL);
+async function getVerifierKeys(force = false): Promise<VerifierKey[]> {
+  if (!force && keyCache && Date.now() - keyCache.at < 6 * 60 * 60 * 1000) return keyCache.keys;
+  const res = await fetch(VERIFIER_KEYS_URL, { redirect: "follow" });
   if (!res.ok) throw new Error("verifier keys unavailable");
   const json = (await res.json()) as { keys: VerifierKey[] };
   keyCache = { at: Date.now(), keys: json.keys ?? [] };
   return keyCache.keys;
-}
-
-function b64ToBytes(b64: string): Uint8Array {
-  const norm = b64.replace(/-/g, "+").replace(/_/g, "/");
-  const padded = norm + "=".repeat((4 - (norm.length % 4)) % 4);
-  const bin = atob(padded);
-  const out = new Uint8Array(bin.length);
-  for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
-  return out;
-}
-
-function pemToSpki(pem: string): Uint8Array {
-  const body = pem.replace(/-----[^-]+-----/g, "").replace(/\s+/g, "");
-  return b64ToBytes(body);
-}
-
-/** DER ECDSA signature -> raw r||s (P-256, 32 bytes each) as WebCrypto expects. */
-function derToRaw(der: Uint8Array): Uint8Array {
-  let i = 0;
-  if (der[i++] !== 0x30) throw new Error("bad DER");
-  if ((der[i] ?? 0) & 0x80) i += 1 + ((der[i] ?? 0) & 0x7f);
-  else i += 1;
-  const readInt = () => {
-    if (der[i++] !== 0x02) throw new Error("bad DER int");
-    const len = der[i++] ?? 0;
-    let bytes = der.slice(i, i + len);
-    i += len;
-    while (bytes.length > 32 && bytes[0] === 0) bytes = bytes.slice(1);
-    const out = new Uint8Array(32);
-    out.set(bytes, 32 - bytes.length);
-    return out;
-  };
-  const r = readInt();
-  const s = readInt();
-  const raw = new Uint8Array(64);
-  raw.set(r, 0);
-  raw.set(s, 32);
-  return raw;
-}
-
-async function verifySignature(message: string, signatureB64: string, keyId: string): Promise<boolean> {
-  const keys = await getVerifierKeys();
-  const key = keys.find((k) => String(k.keyId) === keyId);
-  if (!key) return false;
-  const spki = key.pem ? pemToSpki(key.pem) : b64ToBytes(key.base64);
-  const cryptoKey = await crypto.subtle.importKey(
-    "spki",
-    spki as unknown as ArrayBuffer,
-    { name: "ECDSA", namedCurve: "P-256" },
-    false,
-    ["verify"],
-  );
-  const raw = derToRaw(b64ToBytes(signatureB64));
-  return crypto.subtle.verify(
-    { name: "ECDSA", hash: "SHA-256" },
-    cryptoKey,
-    raw as unknown as ArrayBuffer,
-    new TextEncoder().encode(message) as unknown as ArrayBuffer,
-  );
 }
 
 async function handle(request: Request): Promise<Response> {
@@ -108,34 +48,31 @@ async function handle(request: Request): Promise<Response> {
     return new Response("ok", { status: 200 });
   }
 
-  const sigIndex = rawQuery.indexOf("&signature=");
-  const message = sigIndex >= 0 ? rawQuery.slice(0, sigIndex) : "";
-
-  let signatureOk = false;
-  if (message) {
-    try {
-      signatureOk = await verifySignature(message, signature, keyId);
-    } catch {
-      signatureOk = false;
-    }
+  // Verify Google's ECDSA signature. A key rotation => refetch keys once.
+  let outcome: Awaited<ReturnType<typeof verifySsvQuery>>;
+  try {
+    outcome = await verifySsvQuery(rawQuery, await getVerifierKeys());
+    if (outcome === "unknown_key") outcome = await verifySsvQuery(rawQuery, await getVerifierKeys(true));
+  } catch {
+    // Our side couldn't load Google's keys: ask AdMob to retry later.
+    return new Response("verifier keys unavailable", { status: 503 });
   }
   // A real reward callback with a bad signature is rejected and never credited.
-  if (!signatureOk) return new Response("unverified", { status: 401 });
+  if (outcome !== "valid") return new Response("unverified", { status: 401 });
 
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-  // The callback must come from the ad unit configured by the app owner.
+  // Only the ad unit configured by the app owner can credit rewards. AdMob's
+  // "Verify URL" test is signed but uses a placeholder unit (1234567890) and no
+  // custom_data: acknowledge it with 200 and credit nothing.
   const { data: settings } = await supabaseAdmin
     .from("ad_settings")
     .select("rewarded_ad_unit_id")
     .maybeSingle();
-  const configuredUnit = settings?.rewarded_ad_unit_id ?? null;
-  if (adUnit && configuredUnit) {
-    const expectedUnit = configuredUnit.split("/").pop();
-    if (adUnit !== expectedUnit && adUnit !== configuredUnit) {
-      return new Response("unexpected ad unit", { status: 401 });
-    }
+  if (!isExpectedAdUnit(adUnit, settings?.rewarded_ad_unit_id ?? null)) {
+    return new Response("ok: verified, not credited (other ad unit)", { status: 200 });
   }
+
 
 
   // AdMob's own transaction_id is unique per real view: never credit it twice.
