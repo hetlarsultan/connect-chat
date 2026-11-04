@@ -30,7 +30,7 @@ The web code already talks to `window.Capacitor.Plugins.AdMob` (src/lib/rewarded
         <!-- AdMob APP id (contains "~"), NOT the ad unit id (contains "/") -->
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
-            android:value="ca-app-pub-8449241346087567~XXXXXXXXXX" />
+            android:value="ca-app-pub-8449241346087567~3470418204" />
     </application>
 </manifest>
 ```
